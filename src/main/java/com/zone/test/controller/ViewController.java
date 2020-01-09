@@ -1,9 +1,12 @@
 package com.zone.test.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by Owen Pan on 2016/10/8.
@@ -11,19 +14,20 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 @RequestMapping("/view")
 public class ViewController {
+    @Value("${project.name}")
+    private String projectName;
 
-    @RequestMapping("/{folder}/{file}")
-    public ModelAndView path(@PathVariable String folder, @PathVariable String file) {
-        return new ModelAndView("/" + folder + "/" + file);
+    /**
+     * 2019/12/7 14:28
+     *
+     * @param request
+     * @param modelMap
+     * @return {@code java.lang.String}
+     * @author owen pan
+     */
+    @RequestMapping(value = "/**", method = RequestMethod.GET)
+    public String path(HttpServletRequest request, ModelMap modelMap) {
+        modelMap.put("projectName", projectName);
+        return request.getRequestURI().replace(request.getContextPath() + "/view/", "/");
     }
-
-    @RequestMapping("/{file}")
-    public ModelAndView path(@PathVariable String file) {
-        return new ModelAndView("/" + file);
-    }
-
-//    @RequestMapping(value="/**",method= RequestMethod.GET)
-//    public String path(HttpServletRequest request) {
-//        return request.getRequestURI().replace(request.getContextPath()+"/view/", "/");
-//    }
 }

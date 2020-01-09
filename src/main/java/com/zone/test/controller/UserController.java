@@ -1,7 +1,12 @@
 package com.zone.test.controller;
 
-import com.zone.test.base.common.BaseController;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zone.test.base.common.JsonPageResult;
+import com.zone.test.entity.User;
 import com.zone.test.service.UserService;
+import com.zone.test.base.common.BaseController;
+import com.zone.test.base.common.JsonResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +28,12 @@ public class UserController extends BaseController {
     private Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @RequestMapping("/login")
-    public String login(@RequestParam(value = "name", defaultValue = "") String name, @RequestParam(value = "logined", defaultValue = "false") boolean logined, ModelMap modelMap) {
-        if (name.equals("")) {
+    public String login(@RequestParam(value = "name", defaultValue = "") String name, ModelMap modelMap) {
+        if ("".equals(name)) {
             modelMap.put("returnMsg", "用户名为空");
         } else {
-            logger.info("the param logined value is :" + logined);
-            List<HashMap<String, Object>> list = userService.checkUserExists(name);
-            System.out.println(name);
+            logger.info("the param name value is :" + name);
+            List<HashMap<String, Object>> list = userService.getUser(name);
             if (list!=null&&list.size() > 0) {
                 modelMap.put("returnMsg", "用户存在，跳转主页");
                 return "/index2";
@@ -40,32 +44,28 @@ public class UserController extends BaseController {
         return "/login";
     }
 
-//    @RequestMapping(value = "/sayHi",method = RequestMethod.POST)
-    @PostMapping("/sayHi")
+    @PostMapping( value = "/sayHi")
     @ResponseBody
     public HashMap sayHi(){
-        Integer re=userService.getCount();
-        HashMap hashMap=new HashMap();
+        List<String> re=userService.getCount();
+        List<User> re2=userService.getCount2();
+        IPage<User> table=userService.queryUser(new Page<>(2,2));
+        HashMap<String,Object> hashMap=new HashMap<>();
         hashMap.put("success",true);
-        hashMap.put("msg",helloInteger+"、I'm fine, Thank You!");
+        hashMap.put("msg",helloInteger+"、哈哈 I'm fine, Thank You!\n" +
+                " and what's more, checked for toggling Datasource and paging");
+        hashMap.put("master-ds-com",re);
+        hashMap.put("cluster-ds-com",re2);
+        hashMap.put("table",new JsonPageResult.Builder<>().page(table).data(table.getRecords()).build());
+        hashMap.put("table2",userService.queryUser2(2,2));
         return hashMap;
     }
 
-//    @RequestMapping(value = "/testTransaction",method = RequestMethod.GET)
     @GetMapping("/testTransaction")
     @ResponseBody
-    public HashMap testTransaction(){
-        String errType="";
-        try {
-            //测试事务
-            userService.testTransactional("helloMonster");
-        }catch (Exception e){
-            errType=e.getMessage();
-            logger.error(e.getMessage(),e);
-        }
-        HashMap hashMap=new HashMap();
-        hashMap.put("success",true);
-        hashMap.put("msg","修改用户id为2的用户的密码为helloMonster，中途抛出异常("+errType+")，请查看结果");
-        return hashMap;
+    public JsonResult<Object> testTransaction(){
+        userService.testTransactional("helloMonster");
+        return new JsonResult.Builder<>().build();
+
     }
 }

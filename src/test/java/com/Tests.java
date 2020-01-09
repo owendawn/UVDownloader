@@ -1,4 +1,4 @@
-package com.zone.test;
+package com;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,10 +7,18 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class SpringbootMvnApplicationTests {
+public class Tests {
 
+	/**
+	 * 2019/12/7 14:29
+	 *
+	 * @author owen pan
+	 */
 	@Test
-	public void contextLoads() {
+	public void test() {
+		byte a=0;
+		System.out.println(a);
 	}
+
 
 }

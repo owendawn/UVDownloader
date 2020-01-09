@@ -24,19 +24,19 @@ public class DataSourceAspect {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceAspect.class);
 
     @Before("@annotation(ds)")
-    public void changeDataSource(JoinPoint point, DataSource ds) throws Throwable {
+    public void changeDataSource(JoinPoint point, ToggleDataSource ds) throws Throwable {
         String dsId = ds.value();
         if (!DynamicDataSourceHolder.containsDataSource(dsId)) {
-            logger.error("数据源[{}]不存在，使用默认数据源 > {}", ds.value(), point.getSignature());
+            DynamicDataSourceHolder.setDataSource(DynamicDataSourceHolder.getDefaultDataSource());
         } else {
-            logger.debug("Use DataSource : {} > {}", ds.value(), point.getSignature());
             DynamicDataSourceHolder.setDataSource(ds.value());
         }
+        logger.debug("Use ToggleDataSource : {} > {}", ds.value(), point.getSignature());
     }
 
     @After("@annotation(ds)")
-    public void restoreDataSource(JoinPoint point, DataSource ds) {
-        logger.debug("Revert DataSource : {} > {}", ds.value(), point.getSignature());
+    public void restoreDataSource(JoinPoint point, ToggleDataSource ds) {
+        logger.debug("Revert ToggleDataSource : {} > {}", ds.value(), point.getSignature());
         DynamicDataSourceHolder.clearDataSource();
     }
 

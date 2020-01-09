@@ -9,9 +9,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Created by Owen Pan on 2017-06-16.
+ * @author owen pan
  */
 @Target({TYPE, METHOD})
 @Retention(RUNTIME)
-public @interface DataSource {
+public @interface ToggleDataSource {
     String value();
 }

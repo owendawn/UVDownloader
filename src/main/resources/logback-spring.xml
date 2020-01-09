@@ -1,7 +1,15 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false" scan="true" scanPeriod="30 seconds">
-    <property name="LOG_HOME" value="C:/logs/"/>
-    <property name="PROJECT_NAME" value="SpringBoot"/>
+    <property name="LOG_HOME" value="${user.dir}/logs"/>
+    <property name="PROJECT_NAME" value="UVDownloader"/>
+
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
 
     <!-- 常用的Pattern变量,大家可打开该pattern进行输出观察 -->
     <!-- <pattern> -->
@@ -22,10 +30,23 @@
     <!-- 	Marker: %marker -->
     <!-- 	%n 回车换行符-->
     <!-- </pattern> -->
+    <!--
+        Grouping by parentheses as explained above allows coloring of sub-patterns.
+        As of version 1.0.5,
+        PatternLayout recognizes
+        "%black",
+        "%red", "%green","%yellow","%blue", "%magenta","%cyan", "%white","%gray",
+        "%boldRed","%boldGreen", "%boldYellow", "%boldBlue", "%boldMagenta", "%boldCyan", "%boldWhite"
+        and "%highlight" as conversion words.
+        These conversion words are intended to contain a sub-pattern.
+        Any sub-pattern enclosed by a coloring word will be output in the specified color.
+    -->
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%level] [%class:%line] - %m%n</pattern>
+            <pattern>
+                %boldGreen(%d{yyyy-MM-dd HH:mm:ss}) %highlight(%-5level) %magenta([%class:%line]) - %msg%n
+            </pattern>
         </encoder>
         <!--<filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>debug</level>
@@ -88,8 +109,8 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_HOME}/${PROJECT_NAME}/debug-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>2GB</totalSizeCap>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>100MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -109,6 +130,29 @@
     <logger name="java.sql.Statement" level="DEBUG" additivity="true">
         <appender-ref ref="Debug-Date-Size"/>
     </logger>
+    <logger name="org.springframework.web.servlet.view" level="INFO" additivity="true"/>
+    <logger name="org.springframework.context.support.ApplicationObjectSupport" level="INFO" additivity="true"/>
+    <logger name="org.springframework.boot.autoconfigure.logging.AutoConfigurationReportLoggingInitializer" level="INFO" additivity="true"/>
+    <logger name="org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener" level="INFO" additivity="true"/>
+    <logger name="org.springframework.beans.factory.support" level="INFO" additivity="true"/>
+    <logger name="org.springframework.core.env.PropertySourcesPropertyResolver" level="INFO" additivity="true"/>
+    <logger name="org.springframework.beans.factory.annotation.InjectionMetadata" level="INFO" additivity="true"/>
+    <logger name="org.springframework.web.servlet" level="INFO" additivity="true"/>
+    <logger name="org.springframework.aop.framework.CglibAopProxy" level="INFO" additivity="true"/>
+    <logger name="org.springframework.beans.factory" level="INFO" additivity="true"/>
+    <logger name="org.springframework.core.io.support.PathMatchingResourcePatternResolver" level="INFO" additivity="true"/>
+    <logger name="org.springframework.context.annotation" level="INFO" additivity="true"/>
+    <logger name="org.springframework.core.LocalVariableTableParameterNameDiscoverer" level="INFO" additivity="true"/>
+    <logger name="org.springframework.beans.CachedIntrospectionResults" level="INFO" additivity="true"/>
+    <logger name="org.hibernate.validator.internal.xml.ResourceLoaderHelper" level="INFO" additivity="true"/>
+    <logger name="org.springframework.core.env.MutablePropertySources" level="INFO" additivity="true"/>
+    <logger name="org.springframework.aop.framework.autoproxy.BeanFactoryAdvisorRetrievalHelper" level="INFO" additivity="true"/>
+    <logger name="org.springframework.boot.web.servlet.ServletContextInitializerBeans" level="INFO" additivity="true"/>
+    <logger name="org.hibernate.validator.internal" level="INFO" additivity="true"/>
+    <logger name="org.springframework.boot.context.embedded" level="INFO" additivity="true"/>
+    <logger name="freemarker" level="INFO" additivity="true"/>
+    <logger name="com.zaxxer.hikari.pool.HikariPool" level="INFO" additivity="true"/>
+
 
     <root level="DEBUG">
         <appender-ref ref="Console"/>

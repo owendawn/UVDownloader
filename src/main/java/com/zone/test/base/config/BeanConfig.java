@@ -1,4 +1,4 @@
-package com.zone.test.base.config.bean;
+package com.zone.test.base.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,4 +12,6 @@ public class BeanConfig {
     public Integer getHelloInteger(){
         return 110;
     }
+
+
 }

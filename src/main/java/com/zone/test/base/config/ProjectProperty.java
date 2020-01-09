@@ -1,4 +1,4 @@
-package com.zone.test.base.config.component;
+package com.zone.test.base.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

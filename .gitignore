@@ -25,3 +25,5 @@ nbdist/
 
 tmp
 springboot-mvn.iml
+/logs/
+/.idea/

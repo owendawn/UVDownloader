@@ -1,6 +1,5 @@
-package com.zone.test.base.config.filter;
+package com.zone.test.base.config;
 
-import com.zone.test.base.config.component.ProjectProperty;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +27,12 @@ public class LoginFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        log.info("doFilter LoginFilter");
         HttpServletRequest httpServletRequest= (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse= (HttpServletResponse) servletResponse;
         String uri=httpServletRequest.getRequestURI();
         String queryString=httpServletRequest.getQueryString();
         String host=httpServletRequest.getServerName();
-        if(uri.equals("/")){
+        if("/".equals(uri)){
              httpServletResponse.sendRedirect(projectProperty.getIndexURI());
              return;
         }
