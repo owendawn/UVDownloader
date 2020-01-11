@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.swing.filechooser.FileSystemView;
 
 /**
  * Created by Owen Pan on 2016/10/8.
@@ -16,6 +17,11 @@ import javax.servlet.http.HttpServletRequest;
 public class ViewController {
     @Value("${project.name}")
     private String projectName;
+    private static final String desktopPath = FileSystemView
+            .getFileSystemView()
+            .getHomeDirectory()
+            .getAbsolutePath()
+            .replaceAll("\\\\","/");
 
     /**
      * 2019/12/7 14:28
@@ -28,6 +34,7 @@ public class ViewController {
     @RequestMapping(value = "/**", method = RequestMethod.GET)
     public String path(HttpServletRequest request, ModelMap modelMap) {
         modelMap.put("projectName", projectName);
+        modelMap.put("desktopPath", desktopPath);
         return request.getRequestURI().replace(request.getContextPath() + "/view/", "/");
     }
 }

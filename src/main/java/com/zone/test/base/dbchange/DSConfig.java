@@ -37,30 +37,30 @@ public class DSConfig {
         DynamicDataSourceHolder.setDefaultDataSource(DSNameConsts.MasterDataSource);
         return dataSourceProperty.newDatasource(dbUrl, username, password, driverClassName);
     }
-
-    @Bean(name = DSNameConsts.ClusterDataSource)
-    public DataSource clusterDataSource(@Value("${custom.datasource.ds1.url}")
-                                                String dbUrl,
-                                        @Value("${custom.datasource.ds1.username}")
-                                                String username,
-                                        @Value("${custom.datasource.ds1.password}")
-                                                String password,
-                                        @Value("${custom.datasource.ds1.driver-class-name}")
-                                                String driverClassName) {
-        DynamicDataSourceHolder.setDefaultDataSource(DSNameConsts.ClusterDataSource);
-        return dataSourceProperty.newDatasource(dbUrl, username, password, driverClassName);
-    }
-
-    @Bean(name = DSNameConsts.ClusterDataSource2)
-    public DataSource clusterDataSource2(@Value("${custom.datasource.ds2.url}")
-                                                String dbUrl,
-                                        @Value("${custom.datasource.ds2.username}")
-                                                String username,
-                                        @Value("${custom.datasource.ds2.password}")
-                                                String password,
-                                        @Value("${custom.datasource.ds2.driver-class-name}")
-                                                String driverClassName) {
-        DynamicDataSourceHolder.setDefaultDataSource(DSNameConsts.ClusterDataSource2);
-        return dataSourceProperty.newDatasource(dbUrl, username, password, driverClassName);
-    }
+//
+//    @Bean(name = DSNameConsts.ClusterDataSource)
+//    public DataSource clusterDataSource(@Value("${custom.datasource.ds1.url}")
+//                                                String dbUrl,
+//                                        @Value("${custom.datasource.ds1.username}")
+//                                                String username,
+//                                        @Value("${custom.datasource.ds1.password}")
+//                                                String password,
+//                                        @Value("${custom.datasource.ds1.driver-class-name}")
+//                                                String driverClassName) {
+//        DynamicDataSourceHolder.setDefaultDataSource(DSNameConsts.ClusterDataSource);
+//        return dataSourceProperty.newDatasource(dbUrl, username, password, driverClassName);
+//    }
+//
+//    @Bean(name = DSNameConsts.ClusterDataSource2)
+//    public DataSource clusterDataSource2(@Value("${custom.datasource.ds2.url}")
+//                                                String dbUrl,
+//                                        @Value("${custom.datasource.ds2.username}")
+//                                                String username,
+//                                        @Value("${custom.datasource.ds2.password}")
+//                                                String password,
+//                                        @Value("${custom.datasource.ds2.driver-class-name}")
+//                                                String driverClassName) {
+//        DynamicDataSourceHolder.setDefaultDataSource(DSNameConsts.ClusterDataSource2);
+//        return dataSourceProperty.newDatasource(dbUrl, username, password, driverClassName);
+//    }
 }

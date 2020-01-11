@@ -7,6 +7,6 @@ package com.zone.test.base.dbchange;
  */
 public class DSNameConsts {
     public static final String MasterDataSource="MasterDataSource";
-    public static final String ClusterDataSource="ClusterDataSource";
-    public static final String ClusterDataSource2="ClusterDataSource2";
+//    public static final String ClusterDataSource="ClusterDataSource";
+//    public static final String ClusterDataSource2="ClusterDataSource2";
 }

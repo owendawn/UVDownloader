@@ -49,7 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return false;
     }
 
-    @ToggleDataSource(DSNameConsts.ClusterDataSource)
+//    @ToggleDataSource(DSNameConsts.ClusterDataSource)
     @Override
     public List<String> getCount() {
         return userMapper.getCount();

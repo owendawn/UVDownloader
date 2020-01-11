@@ -28,12 +28,12 @@ public class DataSourceConfig {
     @Autowired
     @Qualifier(DSNameConsts.MasterDataSource)
     private DataSource masterDataSource;
-    @Autowired
-    @Qualifier(DSNameConsts.ClusterDataSource)
-    private DataSource clusterDataSource;
-    @Autowired
-    @Qualifier(DSNameConsts.ClusterDataSource2)
-    private DataSource clusterDataSource2;
+//    @Autowired
+//    @Qualifier(DSNameConsts.ClusterDataSource)
+//    private DataSource clusterDataSource;
+//    @Autowired
+//    @Qualifier(DSNameConsts.ClusterDataSource2)
+//    private DataSource clusterDataSource2;
     /**
      * 核心动态数据源
      *
@@ -45,8 +45,8 @@ public class DataSourceConfig {
         dataSource.setDefaultTargetDataSource(masterDataSource);
         Map<Object, Object> dataSourceMap = new HashMap<>(2);
         dataSourceMap.put(DSNameConsts.MasterDataSource,masterDataSource);
-        dataSourceMap.put(DSNameConsts.ClusterDataSource,clusterDataSource);
-        dataSourceMap.put(DSNameConsts.ClusterDataSource2,clusterDataSource2);
+//        dataSourceMap.put(DSNameConsts.ClusterDataSource,clusterDataSource);
+//        dataSourceMap.put(DSNameConsts.ClusterDataSource2,clusterDataSource2);
         dataSource.setTargetDataSources(dataSourceMap);
         return dataSource;
     }

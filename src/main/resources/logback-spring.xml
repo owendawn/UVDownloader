@@ -3,13 +3,6 @@
     <property name="LOG_HOME" value="${user.dir}/logs"/>
     <property name="PROJECT_NAME" value="UVDownloader"/>
 
-    <!-- 彩色日志依赖的渲染类 -->
-    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
-    <conversionRule conversionWord="wex"
-                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
-    <conversionRule conversionWord="wEx"
-                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
-
 
     <!-- 常用的Pattern变量,大家可打开该pattern进行输出观察 -->
     <!-- <pattern> -->
@@ -30,6 +23,13 @@
     <!-- 	Marker: %marker -->
     <!-- 	%n 回车换行符-->
     <!-- </pattern> -->
+
+    <!-- 彩色日志依赖的渲染类 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
     <!--
         Grouping by parentheses as explained above allows coloring of sub-patterns.
         As of version 1.0.5,
@@ -42,10 +42,21 @@
         Any sub-pattern enclosed by a coloring word will be output in the specified color.
     -->
 
-    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="Console-Dev" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
                 %boldGreen(%d{yyyy-MM-dd HH:mm:ss}) %highlight(%-5level) %magenta([%class:%line]) - %msg%n
+            </pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <appender name="Console-Beta" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %-5level [%class:%line] - %msg%n
             </pattern>
         </encoder>
         <!--<filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -62,9 +73,8 @@
     <appender name="Info-Date" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/${PROJECT_NAME}/info.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%class:%line] - %m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%class:%line] - %m%n</pattern>
         </encoder>
-
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
         </filter>
@@ -79,7 +89,7 @@
     <appender name="Error-Size" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/${PROJECT_NAME}/error.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%class:%line] - %m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%class:%line] - %m%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
@@ -96,12 +106,11 @@
         </triggeringPolicy>
     </appender>
 
-
     <!-- 按日期和大小区分的滚动日志 -->
     <appender name="Debug-Date-Size" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/${PROJECT_NAME}/debug.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%class:%line] - %m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%class:%line] - %m%n</pattern>
             <charset class="java.nio.charset.Charset">UTF-8</charset>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -154,10 +163,23 @@
     <logger name="com.zaxxer.hikari.pool.HikariPool" level="INFO" additivity="true"/>
 
 
-    <root level="DEBUG">
-        <appender-ref ref="Console"/>
-        <appender-ref ref="Debug-Date-Size"/>
-        <appender-ref ref="Info-Date"/>
-        <appender-ref ref="Error-Size"/>
-    </root>
+
+    <springProfile name="beta">
+        <root level="INFO">
+            <appender-ref ref="Console-Beta"/>
+            <appender-ref ref="Debug-Date-Size"/>
+            <appender-ref ref="Info-Date"/>
+            <appender-ref ref="Error-Size"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="Console-Dev"/>
+            <appender-ref ref="Debug-Date-Size"/>
+            <appender-ref ref="Info-Date"/>
+            <appender-ref ref="Error-Size"/>
+        </root>
+    </springProfile>
+
 </configuration>

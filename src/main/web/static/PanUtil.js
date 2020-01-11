@@ -117,7 +117,7 @@ PanUtil = {
             }
             obj.onreadystatechange=function(){
                 if (obj.readyState == 4 && obj.status == 200 || obj.status == 304) { 
-                    callback.call(this, obj.responseText,obj);  
+                    callback.call(this, JSON.parse(obj.responseText),obj);
                 }
             };
             obj.send(null);
@@ -129,10 +129,10 @@ PanUtil = {
             preConfig&&preConfig(obj);
             obj.onreadystatechange = function () {
                 if (obj.readyState == 4 && (obj.status == 200 || obj.status == 304)) { 
-                    callback.call(this, obj.responseText,obj);
+                    callback.call(this, JSON.parse(obj.responseText),obj);
                 }
             };
-            obj.send(data);
+            obj.send(PanUtil.parseObjectToFormData(data));
         }
     },
     //url参数解析
