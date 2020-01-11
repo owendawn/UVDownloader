@@ -48,7 +48,7 @@ public class HttpUrlConnectionUtil {
             //禁用网络缓存
             conn.setUseCaches(false);
             // 设置连接主机超时时间
-            conn.setConnectTimeout(5 * 1000);
+            conn.setConnectTimeout(15 * 1000);
             //设置从主机读取数据超时
             conn.setReadTimeout(25 * 1000);
             //设置请求中的媒体类型信息。
