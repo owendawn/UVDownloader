@@ -85,7 +85,7 @@
             dir: document.getElementById("dir").value.trim(),
             file: document.getElementById("file").value.trim(),
         }, function (re) {
-
+            alert("开始下载")
         })
     }
 
@@ -97,6 +97,8 @@
                 alert("操作失败");
                 document.getElementById("connectSize").value = re.data;
                 document.getElementById("connectSize2").innerText = re.data;
+            } else {
+                alert("操作成功");
             }
         })
     }
@@ -148,7 +150,6 @@
     }
 
     (function doTask() {
-
         var ws = new WebSocket("ws://localhost:8080/ws/m3u8");
         ws.onopen = function (evt) {
             console.log("Connection open ...");
