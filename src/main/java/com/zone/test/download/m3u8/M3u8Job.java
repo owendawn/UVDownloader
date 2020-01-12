@@ -34,4 +34,6 @@ public class M3u8Job {
     private List<String> msg = new ArrayList<>();
     private List<M3u8Item> items = new ArrayList<>();
     private AtomicInteger transfered=new AtomicInteger(0);
+    private AtomicLong last;
+    private AtomicLong speed=new AtomicLong(0);
 }

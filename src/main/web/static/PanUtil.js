@@ -254,5 +254,20 @@ PanUtil = {
             hash |= 0; // Convert to 32bit integer
         }
         return hash;
+    },
+    formatShortNumber:function(num,length){
+        var end=1;
+        for (var i = 0; i < length||0; i++) {
+            end*=10;
+        }
+        if(num>1000*1000*1000){
+            return Math.round(num/(1000*1000*1000)*end)/end+"G";
+        }else if(num>1000*1000){
+            return Math.round(num/(1000*1000)*end)/end+"M";
+        }else if(num>1000){
+            return Math.round(num/(1000)*end)/end+"K";
+        }else{
+            return Math.round(num*end)/end+"B";
+        }
     }
 };

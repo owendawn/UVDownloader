@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 2020/1/11 16:45
@@ -36,6 +37,26 @@ public class M3u8JobWorker implements BaseWorker {
 
     @Override
     public void run() {
+        pool.submit(new Runnable() {
+            @Override
+            public void run() {
+                m3u8Job.setLast(new AtomicLong(System.currentTimeMillis()));
+                long complete=m3u8Job.getComplete().longValue();
+                System.out.println((m3u8Job.getTotal().longValue()>m3u8Job.getCount().longValue())+"|"+m3u8Job.getTotal().longValue()+"|"+m3u8Job.getCount().longValue());
+                while (m3u8Job.getTotal().longValue()>m3u8Job.getCount().longValue()){
+                    try {
+                        long during=(System.currentTimeMillis() - m3u8Job.getLast().longValue());
+                        if(during>0) {
+                            m3u8Job.getSpeed().set(Math.round(1D*(m3u8Job.getComplete().longValue() - complete) / during * 1000)
+                            );
+                        }
+                        Thread.sleep(600);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
         System.out.println("开始下载");
         File root = new File(m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/tmp");
         if (!root.exists()) {
@@ -59,7 +80,7 @@ public class M3u8JobWorker implements BaseWorker {
                         try {
                             if(finishtTarget.exists()&&finishtTarget.isFile()){
                                 length=finishtTarget.length();
-                                System.out.println("完整文件已存在:" + length);
+                                System.out.print("F");
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
                                 m3u8Job.getLength().addAndGet(length);
                                 m3u8Item.setLength(length);
@@ -71,7 +92,7 @@ public class M3u8JobWorker implements BaseWorker {
                             }
                             if (target.exists() && target.isFile()) {
                                 length = target.length();
-                                System.out.println("文件已存在:" + length);
+                                System.out.print("A");
                             } else {
                                 target.createNewFile();
                             }
@@ -135,6 +156,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 file = null;
                                 target.renameTo(finishtTarget);
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
+                                System.out.println(".");
                             }
                         } catch (SocketTimeoutException | ConnectException e) {
                             this.run();

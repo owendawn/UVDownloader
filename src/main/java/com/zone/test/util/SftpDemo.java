@@ -8,7 +8,7 @@ import sun.misc.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class a {
+public class SftpDemo {
     public  void ReadFileFromSftp() {
 
         String path="uploads//";
@@ -59,7 +59,7 @@ public class a {
     }
 
     public static void main(String[] args) {
-        new a().ReadFileFromSftp();
+        new SftpDemo().ReadFileFromSftp();
     }
 
 }

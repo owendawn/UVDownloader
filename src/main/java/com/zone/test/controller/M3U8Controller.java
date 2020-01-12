@@ -35,7 +35,7 @@ public class M3U8Controller {
     public static AtomicLong CONNECT_SIZE = new AtomicLong(1);
     @Autowired
     private M3u8Service m3u8Service;
-    private static ConcurrentHashMap<String, M3u8Job> jobs = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, M3u8Job> jobs = new ConcurrentHashMap<>();
 
     @GetMapping("getConnectSize")
     public JsonResult getConnectSize() {
