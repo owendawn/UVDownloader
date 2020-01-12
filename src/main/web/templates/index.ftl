@@ -3,7 +3,7 @@
 <html>
 <head>
 
-    <title>引导页</title>
+    <title>UV-Downloader</title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" href="PanCss.css">
     <script type="application/javascript" src="PanUtil.js"></script>
