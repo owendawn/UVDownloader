@@ -19,26 +19,26 @@
         <h2 style="font-size: 4rem;font-style: italic;text-align: center;line-height: 0;color: darkgray;">m3u8</h2>
         <hr>
         <p>
-        线程数(<span id="connectSize2">-</span>)
-        <input type="range" min="1" max="100" id="connectSize" onchange="changeConnectSize(this)">
-        <button onclick="setConnectSize()">设置</button>
+            线程数(<span id="connectSize2">-</span>)
+            <input type="range" min="1" max="100" id="connectSize" onchange="changeConnectSize(this)">
+            <button onclick="setConnectSize()">设置</button>
         </p>
         <hr>
         <p>
-        <textarea rows="4" id="from" onchange="getFileName()" style="width: 100%"></textarea>
+            <textarea rows="4" id="from" onchange="getFileName()" style="width: 100%"></textarea>
         </p>
         <p>
-        下载路径
-        <input type="text" id="dir" value="${desktopPath}">
-        <button onclick="document.getElementById('dir').value='${desktopPath}'">桌面</button>
+            下载路径
+            <input type="text" id="dir" value="${desktopPath}">
+            <button onclick="document.getElementById('dir').value='${desktopPath}'">桌面</button>
         </p>
         <p>
-        文件名
-        <input type="text" id="file">
+            文件名
+            <input type="text" id="file">
         </p>
         <p>
-        <button onclick="download()">下载</button>
-        <button onclick="refreshJobs()">刷新</button>
+            <button onclick="download()">下载</button>
+            <button onclick="refreshJobs()">刷新</button>
         </p>
     </div>
     <div style="width: 60%">
@@ -147,7 +147,7 @@
         })
     }
 
-    ( function doTask() {
+    (function doTask() {
 
         var ws = new WebSocket("ws://localhost:8080/ws/m3u8");
         ws.onopen = function (evt) {
@@ -181,8 +181,8 @@
             }
 
             setInterval(function () {
-                if(ws.readyState===1) {
-                    // sendWs("getJobs")
+                if (ws.readyState === 1) {
+                    sendWs("getJobs")
                 }
             }, 1000)
         };
