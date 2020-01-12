@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.yoiss</groupId>
+    <groupId>com.zone</groupId>
     <artifactId>uvdownloader</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -162,7 +162,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.zone.test.StartApplication</mainClass>
+                    <mainClass>com.zone.uvdownloader.StartApplication</mainClass>
                     <includeSystemScope>true</includeSystemScope>
                     <fork>true</fork>
                 </configuration>

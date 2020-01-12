@@ -1,3 +1,4 @@
 @echo off
-java -jar %~dp0target/springboot-ftl-mvn-0.0.1-SNAPSHOT.jar
+title uvdownloader
+java -jar %~dp0target/uvdownloader-0.0.1-SNAPSHOT.jar --spring.profiles.active=beta
 pause

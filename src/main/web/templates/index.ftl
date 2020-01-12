@@ -145,6 +145,8 @@
                 alert("操作失败");
                 document.getElementById("connectSize").value = re.data;
                 document.getElementById("connectSize2").innerText = re.data;
+            }else{
+                alert("转换完毕")
             }
         })
     }
