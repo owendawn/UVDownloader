@@ -10,13 +10,12 @@
 </head>
 
 <body>
-<h1 style="text-align: center;font-size: 5rem;padding: 1rem;text-shadow: 3px 5px 8px #504040;">
+<h1 style="text-align: center;font-size: 7rem;line-height:7rem;padding: 1rem;text-shadow: 16px 22px 22px #504040;">
     ${projectName}
 </h1>
 <div style="display: flex">
-    <div style="width: 40%;">
-        <hr>
-        <h2 style="font-size: 4rem;font-style: italic;text-align: center;line-height: 0;color: darkgray;">m3u8</h2>
+    <article style="width: 40%;">
+        <h2 style="font-size: 6rem;text-shadow: 2px 2px 17px #1d0c0c;font-style: italic;text-align: center;line-height: 0;color: darkgray;">m3u8</h2>
         <hr>
         <p>
             线程数(<span id="connectSize2">-</span>)
@@ -40,9 +39,8 @@
             <button onclick="download()">下载</button>
             <button onclick="refreshJobs()">刷新</button>
         </p>
-    </div>
-    <div style="width: 60%">
-        <p>
+    </article>
+    <article style="width: 60%">
         <table>
             <thead>
             <tr>
@@ -53,11 +51,9 @@
             <tbody id="tbody">
             </tbody>
         </table>
-        </p>
-    </div>
+    </article>
 </div>
 
-<hr>
 
 <script>
     document.getElementById("from").value = "https://eth.ppzuida.com/20190423/5533_3984065b/1000k/hls/index.m3u8"

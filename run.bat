@@ -1,4 +1,4 @@
 @echo off
-title uvdownloader - æ§åˆ¶å°åœ°å€ï¼šhttp://127.0.0.1:8080
+title uvdownloader - ¿ØÖÆÌ¨µØÖ·£ºhttp://127.0.0.1:8080
 java -jar %~dp0target/uvdownloader-0.0.1-SNAPSHOT.jar --spring.profiles.active=beta
 pause
