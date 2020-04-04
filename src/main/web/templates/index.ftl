@@ -56,7 +56,7 @@
 
 
 <script>
-    document.getElementById("from").value = "https://eth.ppzuida.com/20190423/5533_3984065b/1000k/hls/index.m3u8"
+    // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
 
     function getFileName() {
         var url = document.getElementById("from").value.trim();
@@ -134,7 +134,7 @@
     }
 
     function transfer(id) {
-        PanUtil.ajax.post("/m3u8/transfer", {
+        PanUtil.ajax.post("/m3u8/transfer2", {
             id: id,
         }, function (re) {
             if (re.code === 500) {

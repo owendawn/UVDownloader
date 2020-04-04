@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -116,7 +113,12 @@ public class M3U8Controller {
         return new JsonResult.Builder<Object>().data(map).build();
     }
 
-    @PostMapping("transfer")
+    /**
+     * 该方案在实际使用中出现，第二次合并时间戳不一致的问题，导致合并文件后面全部无法播放，遂废弃
+     * @param id
+     * @return
+     */
+   /* @PostMapping("transfer")
     public JsonResult transfer(String id) {
         M3u8Job m3u8Job = jobs.get(id);
         String prefix = "";
@@ -126,14 +128,14 @@ public class M3U8Controller {
             e.printStackTrace();
         }
         StringBuffer stringBuffer = new StringBuffer();
-        String tmp=null;
+        String tmp = null;
         for (int i = 0; i < m3u8Job.getItems().size(); i++) {
             M3u8Item item = m3u8Job.getItems().get(i);
             if (i > 0) {
                 stringBuffer.append("|");
             }
             stringBuffer.append(item.getTarget());
-            if (stringBuffer.length() > 1500) {
+            if (stringBuffer.length() > 1500 || i == m3u8Job.getItems().size() - 1) {
                 String tempFile = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/transfer/" + System.currentTimeMillis() + ".ts";
                 System.out.println(i + "@" + m3u8Job.getItems().size());
                 File ff = new File(tempFile);
@@ -141,38 +143,70 @@ public class M3U8Controller {
                     ff.getParentFile().mkdirs();
                 }
                 String re = executeCommand(prefix + "\"concat:" + stringBuffer.toString() + "\" -c copy -safe 0 -movflags +faststart " + tempFile, tempFile);
-//                System.out.println("command >>" + re);
-                if(tmp!=null){
+                System.out.println("command >>" + re);
+                if (tmp != null) {
                     new File(tmp).delete();
                 }
                 m3u8Job.getTransfered().set(i);
                 stringBuffer = new StringBuffer();
                 stringBuffer.append(tempFile);
-                tmp=tempFile;
+                tmp = tempFile;
             }
         }
-        String target=m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/" + m3u8Job.getFile() + ".mp4";
-        if(new File(target).exists()){
-            target=m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/" + m3u8Job.getFile()+"_"+System.currentTimeMillis() + ".mp4";
+        String target = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/" + m3u8Job.getFile() + ".mp4";
+        if (new File(target).exists()) {
+            target = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/" + m3u8Job.getFile() + "_" + System.currentTimeMillis() + ".mp4";
         }
         String msg = executeCommand(prefix + "\"concat:" + stringBuffer.toString() + "\" -c copy -bsf:a aac_adtstoasc -movflags +faststart "
                         + target,
                 target
         );
-        if(tmp!=null){
+        if (tmp != null) {
             new File(tmp).delete();
         }
         m3u8Job.getTransfered().set(m3u8Job.getTotal());
         return new JsonResult.Builder<Object>().msg(msg).build();
+    }*/
+
+    @PostMapping("transfer2")
+    public JsonResult transfer2(String id) {
+        M3u8Job m3u8Job = jobs.get(id);
+        String target = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/" + m3u8Job.getFile() + ".mp4";
+        if (new File(target).exists()) {
+            target = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/" + m3u8Job.getFile() + "_" + System.currentTimeMillis() + ".mp4";
+        }
+        try {
+            String listPath = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/filelist.txt";
+            String command = (new File("").getCanonicalPath().replaceAll("\\\\", "/") + "/ffmpeg.exe -f concat -i \"" + listPath + "\" -c copy " + target);
+            File file = new File(listPath);
+            if (file.exists()) {
+                file.delete();
+            }
+            file.createNewFile();
+            FileWriter fileWriter = new FileWriter(file, true);
+            for (int i = 0; i < m3u8Job.getItems().size(); i++) {
+                String realFileName=m3u8Job.getItems().get(i).getTarget().substring(m3u8Job.getItems().get(i).getTarget().lastIndexOf("/")+1);
+                fileWriter.write("file 'tmp/" + realFileName + "'\n");
+                fileWriter.flush();
+            }
+            fileWriter.close();
+            String msg = executeCommand(command, target);
+            m3u8Job.getTransfered().set(m3u8Job.getTotal());
+            return new JsonResult.Builder<Object>().msg(msg).build();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new JsonResult.Builder<Object>().code(500).msg(e.getMessage()).build();
+        }
     }
 
     private String executeCommand(String command, String name) {
+        System.out.println(">>>" + command);
         System.out.println(">>>" + name);
         InputStreamReader isr = null;
         BufferedReader br = null;
         StringBuffer msg = new StringBuffer();
         try {
-            ProcessBuilder builder = new ProcessBuilder(command.replaceAll("\\s+"," ").split(" "));
+            ProcessBuilder builder = new ProcessBuilder(command.replaceAll("\\s+", " ").split(" "));
             builder.redirectErrorStream(true);
             Process process = builder.start();
 

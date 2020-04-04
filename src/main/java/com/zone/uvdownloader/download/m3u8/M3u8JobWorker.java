@@ -77,7 +77,7 @@ public class M3u8JobWorker implements BaseWorker {
                         try {
                             if(finishtTarget.exists()&&finishtTarget.isFile()){
                                 length=finishtTarget.length();
-                                System.out.print("F");
+//                                System.out.print("F");
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
                                 m3u8Job.getLength().addAndGet(length);
                                 m3u8Item.setLength(length);
@@ -153,7 +153,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 file = null;
                                 target.renameTo(finishtTarget);
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
-                                System.out.println(".");
+                                System.out.print(".");
                             }
                         } catch (SocketTimeoutException | ConnectException e) {
                             this.run();
