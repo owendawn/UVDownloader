@@ -27,9 +27,13 @@ public class M3u8Job {
     private Double duringSum;
     private AtomicDouble duringAlready=new AtomicDouble(0D);
     private AtomicLong length=new AtomicLong(0);
+    /** 已下载完成的字节数 */
     private AtomicLong complete=new AtomicLong(0);
+    /** 已激活线程 */
     private AtomicInteger active=new AtomicInteger(0);
+    /** 总切片数 */
     private Integer total;
+    /** 已完成切片总数 */
     private AtomicLong count=new AtomicLong(0);
     private List<String> msg = new ArrayList<>();
     private List<M3u8Item> items = new ArrayList<>();

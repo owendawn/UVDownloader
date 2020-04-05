@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RestController
 @RequestMapping("m3u8")
 public class M3U8Controller {
-    public static AtomicLong CONNECT_SIZE = new AtomicLong(1);
+    public static AtomicLong CONNECT_SIZE = new AtomicLong(64);
     @Autowired
     private M3u8Service m3u8Service;
     public static ConcurrentHashMap<String, M3u8Job> jobs = new ConcurrentHashMap<>();
@@ -56,6 +56,7 @@ public class M3U8Controller {
         List<String> list = Arrays.asList(listStr.replaceAll("\r", "").split("\n"));
         List<String> msgs = new ArrayList<>();
         String urlNoEnd = m3u8Job.getFrom().substring(0, m3u8Job.getFrom().lastIndexOf("/"));
+        String urlRoot = m3u8Job.getFrom().substring(0, m3u8Job.getFrom().indexOf("/",m3u8Job.getFrom().startsWith("https://")?9:8));
         List<M3u8Item> items = new ArrayList<>();
         AtomicReference<M3u8Item> tmp = new AtomicReference<>(null);
         Double duringSum = 0D;
@@ -79,15 +80,15 @@ public class M3U8Controller {
                     msgs.add(str);
                 }
             } else {
-                if (str.contains("/")) {
-                    tmp.get().setUrl(str);
+                if (str.startsWith("/")) {
+                    tmp.get().setUrl(urlRoot+str);
                     tmp.get().setFileName(str.substring(str.lastIndexOf("/") + 1));
                 } else {
                     tmp.get().setUrl(urlNoEnd + "/" + str);
                     tmp.get().setFileName(str);
-                    items.add(tmp.get());
-                    tmp.set(null);
                 }
+                items.add(tmp.get());
+                tmp.set(null);
             }
         }
         m3u8Job.setDuringSum(duringSum);

@@ -85,6 +85,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 m3u8Item.getComplete().set(length);
                                 m3u8Job.getComplete().addAndGet(length);
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
+                                log();
                                 return;
                             }
                             if (target.exists() && target.isFile()) {
@@ -120,6 +121,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 file = null;
                                 target.renameTo(finishtTarget);
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
+                                log();
                             } else {
                                 file.seek(length);
                                 conn = (HttpURLConnection) new URL(m3u8Item.getUrl()).openConnection();
@@ -153,7 +155,8 @@ public class M3u8JobWorker implements BaseWorker {
                                 file = null;
                                 target.renameTo(finishtTarget);
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
-                                System.out.print(".");
+//                                System.out.print(".");
+                                log();
                             }
                         } catch (SocketTimeoutException | ConnectException e) {
                             this.run();
@@ -174,6 +177,7 @@ public class M3u8JobWorker implements BaseWorker {
                     }
                 });
             } else {
+                log();
                 i--;
                 try {
                     Thread.sleep(3000);
@@ -182,5 +186,28 @@ public class M3u8JobWorker implements BaseWorker {
                 }
             }
         }
+        log();
+    }
+
+    private void log(){
+        int percent=(int)(Math.floor(m3u8Job.getCount().get()*1.0/m3u8Job.getTotal()*100));
+        String str="";
+        String ss=""+percent;
+        for (int i = 0; i < 100; i++) {
+            if(i<percent){
+                str+="-";
+            }else{
+                str+=" ";
+            }
+        }
+        while (ss.length()<3){
+            ss=" "+ss;
+        }
+        String content=ss+"% >"+str+"<";
+        String prefix="";
+        for (int i = 0; i < content.length(); i++) {
+            prefix+="\b";
+        }
+        System.out.print(prefix+content);
     }
 }

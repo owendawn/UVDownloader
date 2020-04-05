@@ -57,6 +57,7 @@
 
 <script>
     // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
+    // document.getElementById("from").value = "https://www.mmicloud.com/20190404/Eoxt9tiu/2000kb/hls/index.m3u8"
 
     function getFileName() {
         var url = document.getElementById("from").value.trim();
