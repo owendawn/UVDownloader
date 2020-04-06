@@ -75,7 +75,7 @@ public class M3u8JobWorker implements BaseWorker {
                         File target = new File(tmpPath + "/" + m3u8Item.getFileName());
                         File finishtTarget = new File(tmpPath + "/finish_" + m3u8Item.getFileName());
                         try {
-                            if(finishtTarget.exists()&&finishtTarget.isFile()){
+                            if(finishtTarget.exists()&&finishtTarget.isFile()&&finishtTarget.length()>0){
                                 length=finishtTarget.length();
 //                                System.out.print("F");
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
@@ -87,6 +87,8 @@ public class M3u8JobWorker implements BaseWorker {
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
                                 log();
                                 return;
+                            }else if(finishtTarget.length()<=0){
+                                finishtTarget.delete();
                             }
                             if (target.exists() && target.isFile()) {
                                 length = target.length();
@@ -112,7 +114,7 @@ public class M3u8JobWorker implements BaseWorker {
                             m3u8Job.getLength().addAndGet(reLen);
                             m3u8Item.setLength(reLen);
                             if (length >= reLen) {
-                                System.out.println("无需下载：" + m3u8Item.getUrl());
+//                                System.out.println("无需下载：" + m3u8Item.getUrl());
                                 m3u8Job.getCount().incrementAndGet();
                                 m3u8Item.getComplete().set(reLen);
                                 m3u8Job.getComplete().addAndGet(reLen);
