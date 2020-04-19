@@ -120,8 +120,8 @@ public class M3u8JobWorker implements BaseWorker {
 //                                e.printStackTrace();
                             }
                             conn.disconnect();
-                            m3u8Item.setLength(reLen);
                             if (length >= reLen) {
+                                m3u8Item.setLength(reLen);
                                 m3u8Job.getLength().addAndGet(reLen);
 //                                System.out.println("无需下载：" + m3u8Item.getUrl());
                                 m3u8Job.getCount().incrementAndGet();
