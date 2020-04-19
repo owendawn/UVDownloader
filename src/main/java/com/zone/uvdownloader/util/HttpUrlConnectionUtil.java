@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,17 +30,47 @@ import java.util.Map;
 public class HttpUrlConnectionUtil {
     private static Logger log = LoggerFactory.getLogger(HttpUrlConnectionUtil.class);
     private static ObjectMapper objectMapper=new ObjectMapper();
+
+    private static SSLSocketFactory getSSLSocketFactory(){
+        // 创建SSLContext对象，并使用我们指定的信任管理器初始化
+        TrustManager[] tm = {new X509TrustManager() {
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return new java.security.cert.X509Certificate[]{};
+            }
+
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            }
+        } };
+        try {
+            SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");
+            sslContext.init(null, tm, new java.security.SecureRandom());
+            return sslContext.getSocketFactory();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static HttpComunication sendHttpByGet(String url) {
         return sendHttpByGet(url, new HashMap<>(0));
     }
 
     public static HttpComunication sendHttpByGet(String url, Map<String, String> params) {
-        HttpURLConnection conn = null;
+        HttpsURLConnection conn = null;
         HttpComunication httpComunication = new HttpComunication();
         httpComunication.setType(HttpComunication.HttpType.GET);
         try {
             url = url + "?" + map2FormData(params).replace("\\?+", "?");
-            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn = (HttpsURLConnection) new URL(url).openConnection();
+            if(url.startsWith("https:")){
+                conn.setSSLSocketFactory(getSSLSocketFactory());
+            }
             //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
             conn.setRequestMethod("GET");
             //HttpURLConnection默认也支持从服务端读取结果流，所以下面的setDoInput也可以省略
@@ -77,12 +109,15 @@ public class HttpUrlConnectionUtil {
         return sendHttpByJsonPost(url,new HashMap<>(0));
     }
     public static HttpComunication sendHttpByJsonPost(String url, Map<String, String> params) {
-        HttpURLConnection conn = null;
+        HttpsURLConnection conn = null;
         HttpComunication httpComunication = new HttpComunication();
         httpComunication.setType(HttpComunication.HttpType.POST);
 
         try {
-            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn = (HttpsURLConnection) new URL(url).openConnection();
+            if(url.startsWith("https:")){
+                conn.setSSLSocketFactory(getSSLSocketFactory());
+            }
             //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
             conn.setRequestMethod("POST");
             //HttpURLConnection默认也支持从服务端读取结果流，所以下面的setDoInput也可以省略
@@ -128,7 +163,7 @@ public class HttpUrlConnectionUtil {
     }
 
     public static HttpComunication sendHttpByFormPost(String url, Map<String, String> params) {
-        HttpURLConnection conn = null;
+        HttpsURLConnection conn = null;
         HttpComunication httpComunication = new HttpComunication();
         httpComunication.setType(HttpComunication.HttpType.POST);
 
@@ -136,7 +171,10 @@ public class HttpUrlConnectionUtil {
             // 请求的参数转换为byte数组
             byte[] postData = map2FormData(params).getBytes();
 
-            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn = (HttpsURLConnection) new URL(url).openConnection();
+            if(url.startsWith("https:")){
+                conn.setSSLSocketFactory(getSSLSocketFactory());
+            }
             //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
             conn.setRequestMethod("POST");
             //HttpURLConnection默认也支持从服务端读取结果流，所以下面的setDoInput也可以省略
@@ -192,7 +230,7 @@ public class HttpUrlConnectionUtil {
     }
 
     //处理响应体
-    private static void handleResponse( HttpURLConnection conn, HttpComunication httpComunication) throws IOException {
+    private static void handleResponse( HttpsURLConnection conn, HttpComunication httpComunication) throws IOException {
         //调用getInputStream方法后，服务端才会收到请求，并阻塞式地接收服务端返回的数据
         InputStream is = conn.getInputStream();
         //将InputStream转换成byte数组,getBytesByInputStream会关闭输入流
@@ -214,7 +252,7 @@ public class HttpUrlConnectionUtil {
     }
 
     //读取请求头
-    private static String getReqeustHeader(HttpURLConnection conn) {
+    private static String getReqeustHeader(HttpsURLConnection conn) {
         Map<String, List<String>> requestHeaderMap = conn.getRequestProperties();
         Iterator<String> requestHeaderIterator = requestHeaderMap.keySet().iterator();
         StringBuilder sbRequestHeader = new StringBuilder();
@@ -230,7 +268,7 @@ public class HttpUrlConnectionUtil {
     }
 
     //读取响应头
-    private static String getResponseHeader(HttpURLConnection conn) {
+    private static String getResponseHeader(HttpsURLConnection conn) {
         Map<String, List<String>> responseHeaderMap = conn.getHeaderFields();
         int size = responseHeaderMap.size();
         StringBuilder sbResponseHeader = new StringBuilder();

@@ -10,12 +10,13 @@
 </head>
 
 <body>
-<h1 style="text-align: center;font-size: 7rem;line-height:7rem;padding: 1rem;text-shadow: 16px 22px 22px #504040;">
+<h1 style="margin:6px;text-align: center;font-size: 7rem;line-height:7rem;padding: 1rem;text-shadow: 16px 22px 22px #504040;">
     ${projectName}
 </h1>
 <div style="display: flex">
     <article style="width: 40%;">
-        <h2 style="font-size: 6rem;text-shadow: 2px 2px 17px #1d0c0c;font-style: italic;text-align: center;line-height: 0;color: darkgray;">m3u8</h2>
+        <h2 style="margin-top: 36px;font-size: 6rem;text-shadow: 2px 2px 17px #1d0c0c;font-style: italic;text-align: center;line-height: 0;color: darkgray;">
+            m3u8</h2>
         <hr>
         <p>
             线程数(<span id="connectSize2">-</span>)
@@ -24,9 +25,6 @@
         </p>
         <hr>
         <p>
-            <textarea rows="4" id="from" onchange="getFileName()" style="width: 100%"></textarea>
-        </p>
-        <p>
             下载路径
             <input type="text" id="dir" value="${desktopPath}">
             <button onclick="document.getElementById('dir').value='${desktopPath}'">桌面</button>
@@ -34,10 +32,19 @@
         <p>
             文件名
             <input type="text" id="file">
+
         </p>
+        <hr>
         <p>
+            <textarea rows="4" id="from" onchange="getFileName()" style="line-height: 1.5rem;width: 100%"></textarea>
             <button onclick="download()">下载</button>
+            <br>
             <button onclick="refreshJobs()">刷新</button>
+            <br>
+        </p>
+        <hr>
+        <p>
+
         </p>
     </article>
     <article style="width: 60%">
@@ -56,8 +63,11 @@
 
 
 <script>
+    var jobMap={};
+    var ws;
     // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
     // document.getElementById("from").value = "https://www.mmicloud.com/20190404/Eoxt9tiu/2000kb/hls/index.m3u8"
+    // document.getElementById("from").value = "https://s2.135-cdn.com/2020/04/10/o762FVjpITReMJSB/index.m3u8"
 
     function getFileName() {
         var url = document.getElementById("from").value.trim();
@@ -85,6 +95,13 @@
             alert("开始下载")
         })
     }
+    function details(dom) {
+        var id=dom.getAttribute("data-id");
+        document.getElementById("from").value=jobMap[id].from;
+        document.getElementById("dir").value=jobMap[id].dir;
+        document.getElementById("file").value=jobMap[id].file;
+    }
+
 
     function setConnectSize() {
         PanUtil.ajax.post("/m3u8/setConnectSize", {
@@ -107,17 +124,23 @@
     function refreshJobs() {
         PanUtil.ajax.get("/m3u8/getJobs", {}, function (re) {
             parseJobs(re.data)
+            if(ws){
+                ws.close();
+                ws=undefined;
+            }
+            doTask();
         });
     }
 
     refreshJobs();
 
     function parseJobs(map) {
+        jobMap=map;
         var arr = [];
         for (var k in map) {
             var it = map[k];
             arr.push([
-                "<tr><td colspan='2' style='background: #f7f7f7;color: brown;font-weight: bold;'>" + it.from + "</td></tr>",
+                "<tr><td colspan='2' style='background: #f7f7f7;color: brown;font-weight: bold;'>" + it.from + "<button data-id='"+k+"' onclick='details(this)'>详情</button></td></tr>",
                 "<tr><td>下载路径</td><td>" + it.dir + "/" + it.file + "</td></tr>",
                 "<tr><td>工作线程</td><td>" + it.active + "</td></tr>",
                 "<tr><td>速度</td><td>" + PanUtil.formatShortNumber(it.speed, 2) + "/s</td></tr>",
@@ -142,14 +165,14 @@
                 alert("操作失败");
                 document.getElementById("connectSize").value = re.data;
                 document.getElementById("connectSize2").innerText = re.data;
-            }else{
+            } else {
                 alert("转换完毕")
             }
         })
     }
 
-    (function doTask() {
-        var ws = new WebSocket("ws://localhost:8080/ws/m3u8");
+    function doTask() {
+        ws = new WebSocket("ws://localhost:8080/ws/m3u8");
         ws.onopen = function (evt) {
             console.log("Connection open ...");
             ws.onmessage = function (e) {
@@ -166,7 +189,7 @@
             };
             ws.onclose = function (evt) {
                 console.log("Connection closed.");
-                doTask()
+                console.log(evt)
             };
             ws.onerror = function (event) {
                 console.log("Connection error.");
@@ -186,7 +209,7 @@
                 }
             }, 1000)
         };
-    })();
+    }
 
 </script>
 </body>

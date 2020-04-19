@@ -5,11 +5,15 @@ import com.zone.uvdownloader.download.BaseWorker;
 import com.zone.uvdownloader.entity.M3u8Item;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 
-import java.io.*;
+import javax.net.ssl.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.RandomAccessFile;
 import java.net.ConnectException;
-import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -38,20 +42,22 @@ public class M3u8JobWorker implements BaseWorker {
             @Override
             public void run() {
                 m3u8Job.setLast(new AtomicLong(System.currentTimeMillis()));
-                long complete=m3u8Job.getComplete().longValue();
-                System.out.println((m3u8Job.getTotal().longValue()>m3u8Job.getCount().longValue())+"|"+m3u8Job.getTotal().longValue()+"|"+m3u8Job.getCount().longValue());
-                while (m3u8Job.getTotal().longValue()>m3u8Job.getCount().longValue()){
+                long complete = m3u8Job.getComplete().longValue();
+                System.out.println((m3u8Job.getTotal().longValue() > m3u8Job.getCount().longValue()) + "|" + m3u8Job.getTotal().longValue() + "|" + m3u8Job.getCount().longValue());
+                while (m3u8Job.getTotal().longValue() > m3u8Job.getCount().longValue()) {
                     try {
-                        long during=(System.currentTimeMillis() - m3u8Job.getLast().longValue());
-                        if(during>0) {
-                            m3u8Job.getSpeed().set(Math.round(1D*(m3u8Job.getComplete().longValue() - complete) / during * 1000)
+                        long during = (System.currentTimeMillis() - m3u8Job.getLast().longValue());
+                        if (during > 0) {
+                            m3u8Job.getSpeed().set(
+                                    Math.round(1D * (m3u8Job.getComplete().longValue() - complete) / during * 1000)
                             );
                         }
-                        Thread.sleep(600);
-                    }catch (Exception e){
+                        Thread.sleep(500);
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
+                m3u8Job.getSpeed().set(0);
             }
         });
         System.out.println("开始下载");
@@ -69,14 +75,14 @@ public class M3u8JobWorker implements BaseWorker {
                     public void run() {
                         m3u8Job.getActive().incrementAndGet();
                         long length = 0;
-                        HttpURLConnection conn = null;
+                        HttpsURLConnection conn = null;
                         RandomAccessFile file = null;
                         BufferedInputStream bis = null;
                         File target = new File(tmpPath + "/" + m3u8Item.getFileName());
                         File finishtTarget = new File(tmpPath + "/finish_" + m3u8Item.getFileName());
                         try {
-                            if(finishtTarget.exists()&&finishtTarget.isFile()&&finishtTarget.length()>0){
-                                length=finishtTarget.length();
+                            if (finishtTarget.exists() && finishtTarget.isFile() && finishtTarget.length() > 0) {
+                                length = finishtTarget.length();
 //                                System.out.print("F");
                                 m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
                                 m3u8Job.getLength().addAndGet(length);
@@ -87,12 +93,12 @@ public class M3u8JobWorker implements BaseWorker {
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
                                 log();
                                 return;
-                            }else if(finishtTarget.length()<=0){
+                            } else if (finishtTarget.length() <= 0) {
                                 finishtTarget.delete();
                             }
                             if (target.exists() && target.isFile()) {
                                 length = target.length();
-                                System.out.print("A");
+//                                System.out.print("A");
                             } else {
                                 target.createNewFile();
                             }
@@ -100,7 +106,10 @@ public class M3u8JobWorker implements BaseWorker {
                             file = new RandomAccessFile(target.getAbsoluteFile(), "rw");
 
 
-                            conn = (HttpURLConnection) new URL(m3u8Item.getUrl()).openConnection();
+                            conn = (HttpsURLConnection) new URL(m3u8Item.getUrl()).openConnection();
+                            if (m3u8Item.getUrl().startsWith("https:")) {
+                                conn.setSSLSocketFactory(getSSLSocketFactory());
+                            }
                             conn.setConnectTimeout(30 * 1000);
                             long reLen = 0;
                             try {
@@ -111,9 +120,9 @@ public class M3u8JobWorker implements BaseWorker {
 //                                e.printStackTrace();
                             }
                             conn.disconnect();
-                            m3u8Job.getLength().addAndGet(reLen);
                             m3u8Item.setLength(reLen);
                             if (length >= reLen) {
+                                m3u8Job.getLength().addAndGet(reLen);
 //                                System.out.println("无需下载：" + m3u8Item.getUrl());
                                 m3u8Job.getCount().incrementAndGet();
                                 m3u8Item.getComplete().set(reLen);
@@ -126,7 +135,10 @@ public class M3u8JobWorker implements BaseWorker {
                                 log();
                             } else {
                                 file.seek(length);
-                                conn = (HttpURLConnection) new URL(m3u8Item.getUrl()).openConnection();
+                                conn = (HttpsURLConnection) new URL(m3u8Item.getUrl()).openConnection();
+                                if (m3u8Item.getUrl().startsWith("https:")) {
+                                    conn.setSSLSocketFactory(getSSLSocketFactory());
+                                }
                                 //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
                                 conn.setRequestMethod("GET");
                                 //HttpURLConnection默认也支持从服务端读取结果流，所以下面的setDoInput也可以省略
@@ -161,6 +173,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 log();
                             }
                         } catch (SocketTimeoutException | ConnectException e) {
+                            System.out.println("异常重置：" + m3u8Item.getUrl());
                             this.run();
                         } catch (Exception e) {
                             System.out.println("异常：" + m3u8Item.getUrl());
@@ -191,25 +204,51 @@ public class M3u8JobWorker implements BaseWorker {
         log();
     }
 
-    private void log(){
-        int percent=(int)(Math.floor(m3u8Job.getCount().get()*1.0/m3u8Job.getTotal()*100));
-        String str="";
-        String ss=""+percent;
+    private void log() {
+        int percent = (int) (Math.floor(m3u8Job.getCount().get() * 1.0 / m3u8Job.getTotal() * 100));
+        String str = "";
+        String ss = "" + percent;
         for (int i = 0; i < 100; i++) {
-            if(i<percent){
-                str+="-";
-            }else{
-                str+=" ";
+            if (i < percent) {
+                str += "-";
+            } else {
+                str += " ";
             }
         }
-        while (ss.length()<3){
-            ss=" "+ss;
+        while (ss.length() < 3) {
+            ss = " " + ss;
         }
-        String content=ss+"% >"+str+"<";
-        String prefix="";
-        for (int i = 0; i < content.length(); i++) {
-            prefix+="\b";
+        String content = ss + "% >" + str + "<";
+        String prefix = "";
+        for (int i = 0; i < /*content.length()*/500; i++) {
+            prefix += "\b";
         }
-        System.out.print(prefix+content);
+        System.out.print(prefix + content);
+    }
+
+    private SSLSocketFactory getSSLSocketFactory() {
+        // 创建SSLContext对象，并使用我们指定的信任管理器初始化
+        TrustManager[] tm = {new X509TrustManager() {
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return new java.security.cert.X509Certificate[]{};
+            }
+
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            }
+        }};
+        try {
+            SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");
+            sslContext.init(null, tm, new java.security.SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

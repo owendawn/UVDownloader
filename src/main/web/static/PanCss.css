@@ -13,7 +13,7 @@ html,body{
     top:0;
 }
 *{
-    line-height: 2.6rem;
+    line-height: 1.5rem;
 }
 article{
     width: 40%;
@@ -23,21 +23,24 @@ article{
     padding: 32px 16px 64px 16px;
 }
 hr{
-    margin: 2rem 1rem;
+    margin: 1rem 1rem;
 }
 textarea{
     opacity: 0.6;
 }
 input{
+    vertical-align: middle;
     border-width: 2px;
     padding: 4px 12px;
     opacity: 0.6;
+    line-height: 2rem;
 }
 button,input[type='button']{
     background: #573131;
     color: white;
     border-radius: 10%;
     padding: 6px 22px;
+    line-height: 2rem;
 }
 button:hover,input[type='button']:hover{
    opacity: 0.85;
