@@ -106,7 +106,7 @@ public class M3u8JobWorker implements BaseWorker {
                             file = new RandomAccessFile(target.getAbsoluteFile(), "rw");
 
 
-                            conn = (HttpsURLConnection) new URL(m3u8Item.getUrl()).openConnection();
+                            conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
                             if (m3u8Item.getUrl().startsWith("https:")) {
                                 conn.setSSLSocketFactory(getSSLSocketFactory());
                             }
@@ -135,7 +135,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 log();
                             } else {
                                 file.seek(length);
-                                conn = (HttpsURLConnection) new URL(m3u8Item.getUrl()).openConnection();
+                                conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
                                 if (m3u8Item.getUrl().startsWith("https:")) {
                                     conn.setSSLSocketFactory(getSSLSocketFactory());
                                 }

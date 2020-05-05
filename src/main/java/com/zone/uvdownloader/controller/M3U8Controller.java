@@ -52,55 +52,59 @@ public class M3U8Controller {
 
     @PostMapping("download")
     public JsonResult download(M3u8Job m3u8Job) {
-        String listStr = HttpUrlConnectionUtil.sendHttpByGet(m3u8Job.getFrom()).getResponseBodyStr();
-        List<String> list = Arrays.asList(listStr.replaceAll("\r", "").split("\n"));
-        List<String> msgs = new ArrayList<>();
-        String urlNoEnd = m3u8Job.getFrom().substring(0, m3u8Job.getFrom().lastIndexOf("/"));
-        String urlRoot = m3u8Job.getFrom().substring(0, m3u8Job.getFrom().indexOf("/",m3u8Job.getFrom().startsWith("https://")?9:8));
-        List<M3u8Item> items = new ArrayList<>();
-        AtomicReference<M3u8Item> tmp = new AtomicReference<>(null);
-        Double duringSum = 0D;
-        for (String str : list) {
-            str = str.trim();
-            if (str.length() <= 0) {
-                continue;
-            }
-            if (str.startsWith("#")) {
-                if (str.startsWith("#EXTINF:")) {
-                    String[] arr = str.substring(8).split(",", -1);
-                    M3u8Item it = tmp.get();
-                    if (it == null) {
-                        it = new M3u8Item();
-                        it.setDuring(Double.parseDouble(arr[0]));
-                        it.setName(arr[1]);
-                        tmp.set(it);
-                        duringSum += it.getDuring();
+        try {
+            String listStr = HttpUrlConnectionUtil.sendHttpByGet(m3u8Job.getFrom()).getResponseBodyStr();
+            List<String> list = Arrays.asList(listStr.replaceAll("\r", "").split("\n"));
+            List<String> msgs = new ArrayList<>();
+            String urlNoEnd = m3u8Job.getFrom().substring(0, m3u8Job.getFrom().lastIndexOf("/"));
+            String urlRoot = m3u8Job.getFrom().substring(0, m3u8Job.getFrom().indexOf("/", m3u8Job.getFrom().startsWith("https://") ? 9 : 8));
+            List<M3u8Item> items = new ArrayList<>();
+            AtomicReference<M3u8Item> tmp = new AtomicReference<>(null);
+            Double duringSum = 0D;
+            for (String str : list) {
+                str = str.trim();
+                if (str.length() <= 0) {
+                    continue;
+                }
+                if (str.startsWith("#")) {
+                    if (str.startsWith("#EXTINF:")) {
+                        String[] arr = str.substring(8).split(",", -1);
+                        M3u8Item it = tmp.get();
+                        if (it == null) {
+                            it = new M3u8Item();
+                            it.setDuring(Double.parseDouble(arr[0]));
+                            it.setName(arr[1]);
+                            tmp.set(it);
+                            duringSum += it.getDuring();
+                        }
+                    } else {
+                        msgs.add(str);
                     }
                 } else {
-                    msgs.add(str);
+                    if (str.startsWith("/")) {
+                        tmp.get().setUrl(urlRoot + str);
+                        tmp.get().setFileName(str.substring(str.lastIndexOf("/") + 1));
+                    } else {
+                        tmp.get().setUrl(urlNoEnd + "/" + str);
+                        tmp.get().setFileName(str);
+                    }
+                    items.add(tmp.get());
+                    tmp.set(null);
                 }
-            } else {
-                if (str.startsWith("/")) {
-                    tmp.get().setUrl(urlRoot+str);
-                    tmp.get().setFileName(str.substring(str.lastIndexOf("/") + 1));
-                } else {
-                    tmp.get().setUrl(urlNoEnd + "/" + str);
-                    tmp.get().setFileName(str);
-                }
-                items.add(tmp.get());
-                tmp.set(null);
             }
+            m3u8Job.setDuringSum(duringSum);
+            m3u8Job.setItems(items);
+            m3u8Job.setMsg(msgs);
+            m3u8Job.setTotal(items.size());
+            m3u8Job.setId(m3u8Job.getFrom() + "_" + m3u8Job.getDir() + "/" + m3u8Job.getFile());
+            jobs.put(m3u8Job.getId(), m3u8Job);
+            JobWorkerOverseer.WORK_POOL.add(new M3u8JobWorker(m3u8Job));
+            Map map = PFUtil.getFieldMap(m3u8Job);
+            map.remove("items");
+            return new JsonResult.Builder<Object>().data(map).build();
+        }catch (Exception e){
+            return new JsonResult.Builder<Object>().code(500).msg(e.getMessage()).build();
         }
-        m3u8Job.setDuringSum(duringSum);
-        m3u8Job.setItems(items);
-        m3u8Job.setMsg(msgs);
-        m3u8Job.setTotal(items.size());
-        m3u8Job.setId(m3u8Job.getFrom() + "_" + m3u8Job.getDir() + "/" + m3u8Job.getFile());
-        jobs.put(m3u8Job.getId(), m3u8Job);
-        JobWorkerOverseer.WORK_POOL.add(new M3u8JobWorker(m3u8Job));
-        Map map = PFUtil.getFieldMap(m3u8Job);
-        map.remove("items");
-        return new JsonResult.Builder<Object>().data(map).build();
     }
 
     @GetMapping("getJobs")

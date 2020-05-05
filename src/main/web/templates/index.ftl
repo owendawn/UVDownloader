@@ -92,7 +92,7 @@
             dir: document.getElementById("dir").value.trim(),
             file: document.getElementById("file").value.trim(),
         }, function (re) {
-            alert("开始下载")
+            alert(re.code===200?"开始下载":re.msg);
         })
     }
     function details(dom) {

@@ -67,7 +67,7 @@ public class HttpUrlConnectionUtil {
         httpComunication.setType(HttpComunication.HttpType.GET);
         try {
             url = url + "?" + map2FormData(params).replace("\\?+", "?");
-            conn = (HttpsURLConnection) new URL(url).openConnection();
+            conn= (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
             if(url.startsWith("https:")){
                 conn.setSSLSocketFactory(getSSLSocketFactory());
             }
@@ -114,7 +114,7 @@ public class HttpUrlConnectionUtil {
         httpComunication.setType(HttpComunication.HttpType.POST);
 
         try {
-            conn = (HttpsURLConnection) new URL(url).openConnection();
+            conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
             if(url.startsWith("https:")){
                 conn.setSSLSocketFactory(getSSLSocketFactory());
             }
@@ -171,7 +171,7 @@ public class HttpUrlConnectionUtil {
             // 请求的参数转换为byte数组
             byte[] postData = map2FormData(params).getBytes();
 
-            conn = (HttpsURLConnection) new URL(url).openConnection();
+            conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
             if(url.startsWith("https:")){
                 conn.setSSLSocketFactory(getSSLSocketFactory());
             }
