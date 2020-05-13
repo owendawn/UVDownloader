@@ -226,7 +226,7 @@ public class M3u8JobWorker implements BaseWorker {
         System.out.print(prefix + content);
     }
 
-    private SSLSocketFactory getSSLSocketFactory() {
+    public static SSLSocketFactory getSSLSocketFactory() {
         // 创建SSLContext对象，并使用我们指定的信任管理器初始化
         TrustManager[] tm = {new X509TrustManager() {
             @Override

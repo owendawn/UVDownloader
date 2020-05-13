@@ -21,8 +21,11 @@ import java.util.concurrent.atomic.AtomicLong;
 @EqualsAndHashCode(callSuper = false)
 public class M3u8Job {
     private String id;
+    //m2u8地址
     private String from;
+    //下载路径
     private String dir;
+    //文件名
     private String file;
     private Double duringSum;
     private AtomicDouble duringAlready=new AtomicDouble(0D);

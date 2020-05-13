@@ -151,7 +151,7 @@
                 "<tr><td>切片数</td><td>" + it.total + "</td></tr>",
                 "<tr><td>完成切片</td><td>" + it.count + "</td></tr>",
                 "<tr><td>转换切片</td><td>" + it.transfered + "</td></tr>",
-                "<tr><td>操作</td><td><button onclick='transfer(\"" + it.id + "\")'>合并转换</button></td></tr>",
+                "<tr><td>操作</td><td><button onclick='transfer(\"" + it.id + "\")'>合并转换</button> <button onclick='reloadPiece(\"" + it.id + "\")'>切片重新下载</button></td></tr>",
             ].join(""))
         }
         document.getElementById("tbody").innerHTML = arr.join("")
@@ -167,6 +167,19 @@
                 document.getElementById("connectSize2").innerText = re.data;
             } else {
                 alert("转换完毕")
+            }
+        })
+    }
+
+    function reloadPiece(id) {
+        PanUtil.ajax.post("/m3u8/reloadPiece", {
+            id: id,
+            file:prompt("请输入重新下载文件名（包含后缀）")
+        }, function (re) {
+            if (re.code === 500) {
+                alert("操作失败");
+            } else {
+                alert("操作成功")
             }
         })
     }

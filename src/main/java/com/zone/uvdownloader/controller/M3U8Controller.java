@@ -15,11 +15,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.zone.uvdownloader.download.m3u8.M3u8JobWorker.getSSLSocketFactory;
 
 /**
  * 2020/1/11 13:56
@@ -48,6 +52,61 @@ public class M3U8Controller {
         } else {
             return new JsonResult.Builder<Long>().code(500).msg(re.toString()).data(CONNECT_SIZE.get()).build();
         }
+    }
+
+    @PostMapping("reloadPiece")
+    public JsonResult reloadPiece(String id, String file) {
+        M3u8Job m3u8Job = jobs.get(id);
+        String tmpDir = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/tmp/";
+        if (file.contains("finish_")) {
+            file = file.substring("finish_".length());
+        }
+        File ff = new File(tmpDir + "/finish_" + file);
+        if (ff.exists()) {
+            ff.delete();
+        }
+        try {
+            File f = new File(tmpDir + "/" + file);
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            String urlRoot = m3u8Job.getItems().get(0).getUrl().substring(0, m3u8Job.getItems().get(0).getUrl().lastIndexOf("/") + 1);
+            HttpsURLConnection conn = null;
+            RandomAccessFile raf = null;
+            BufferedInputStream bis = null;
+
+            raf = new RandomAccessFile(f.getAbsoluteFile(), "rw");
+            conn = (HttpsURLConnection) new URL(null, urlRoot + file, new sun.net.www.protocol.https.Handler()).openConnection();
+            if (m3u8Job.getItems().get(0).getUrl().startsWith("https:")) {
+                conn.setSSLSocketFactory(getSSLSocketFactory());
+            }
+            //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
+            conn.setRequestMethod("GET");
+            //HttpURLConnection默认也支持从服务端读取结果流，所以下面的setDoInput也可以省略
+            conn.setDoInput(true);
+            // Post请求必须设置允许输出 默认false
+            conn.setDoOutput(false);
+            //禁用网络缓存
+            conn.setUseCaches(false);
+            // 设置连接主机超时时间
+            conn.setConnectTimeout(30 * 1000);
+            //在对各种参数配置完成后，通过调用connect方法建立TCP连接，但是并未真正获取数据
+            //conn.connect()方法不必显式调用，当调用conn.getInputStream()方法时内部也会自动调用connect方法
+//        conn.addRequestProperty("Range", "bytes=" + length + "-" + reLen);
+            conn.connect();
+            bis = new BufferedInputStream(conn.getInputStream());
+            int len = 0;
+            byte[] buff = new byte[1024];
+            while ((len = bis.read(buff)) > 0) {
+                raf.write(buff, 0, len);
+            }
+            IOUtils.closeQuietly(raf);
+            f.renameTo(ff);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new JsonResult.Builder<Long>().code(500).msg(e.getMessage()).build();
+        }
+        return new JsonResult.Builder<Long>().msg("操作成功").build();
     }
 
     @PostMapping("download")
@@ -102,7 +161,7 @@ public class M3U8Controller {
             Map map = PFUtil.getFieldMap(m3u8Job);
             map.remove("items");
             return new JsonResult.Builder<Object>().data(map).build();
-        }catch (Exception e){
+        } catch (Exception e) {
             return new JsonResult.Builder<Object>().code(500).msg(e.getMessage()).build();
         }
     }
@@ -120,6 +179,7 @@ public class M3U8Controller {
 
     /**
      * 该方案在实际使用中出现，第二次合并时间戳不一致的问题，导致合并文件后面全部无法播放，遂废弃
+     *
      * @param id
      * @return
      */
@@ -172,7 +232,6 @@ public class M3U8Controller {
         m3u8Job.getTransfered().set(m3u8Job.getTotal());
         return new JsonResult.Builder<Object>().msg(msg).build();
     }*/
-
     @PostMapping("transfer2")
     public JsonResult transfer2(String id) {
         M3u8Job m3u8Job = jobs.get(id);
@@ -190,7 +249,7 @@ public class M3U8Controller {
             file.createNewFile();
             FileWriter fileWriter = new FileWriter(file, true);
             for (int i = 0; i < m3u8Job.getItems().size(); i++) {
-                String realFileName=m3u8Job.getItems().get(i).getTarget().substring(m3u8Job.getItems().get(i).getTarget().lastIndexOf("/")+1);
+                String realFileName = m3u8Job.getItems().get(i).getTarget().substring(m3u8Job.getItems().get(i).getTarget().lastIndexOf("/") + 1);
                 fileWriter.write("file 'tmp/" + realFileName + "'\n");
                 fileWriter.flush();
             }
@@ -220,7 +279,7 @@ public class M3U8Controller {
             String szline;
             while ((szline = br.readLine()) != null) {
                 System.out.println(szline);
-                msg.append(szline);
+                msg.append(szline+"\n");
             }
             int result = process.waitFor();
             System.out.println(result);
