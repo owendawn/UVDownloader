@@ -146,17 +146,17 @@
                 + "<br><button data-id='"+k+"' onclick='details(this)'>详情</button>"
                 + "<br><button data-id='"+k+"' onclick='toggle(this)'>收缩/展开</button>"
                 +"</td></tr>",
-                "<tr "+(switchMap[k]===1?"style='display:none;'":"style='display:table-row;;'")+"><td>下载路径</td><td>" + it.dir + "/" + it.file + "</td></tr>",
-                "<tr><td>工作线程</td><td>" + it.active + "</td></tr>",
-                "<tr><td>速度</td><td>" + PanUtil.formatShortNumber(it.speed, 2) + "/s</td></tr>",
-                "<tr><td>总时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringSum) * 1000, 'HH:mm:ss') + "</td></tr>",
-                "<tr><td>完成时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringAlready) * 1000, 'HH:mm:ss') + "</td></tr>",
-                "<tr><td>总大小</td><td>" + PanUtil.formatShortNumber(it.length, 3) + "</td></tr>",
-                "<tr><td>完成大小</td><td>" + PanUtil.formatShortNumber(it.complete, 3) + "</td></tr>",
-                "<tr><td>切片数</td><td>" + it.total + "</td></tr>",
-                "<tr><td>完成切片</td><td>" + it.count + "</td></tr>",
-                "<tr><td>转换切片</td><td>" + it.transfered + "</td></tr>",
-                "<tr><td>操作</td><td><button onclick='transfer(\"" + it.id + "\")'>合并转换</button> <button onclick='reloadPiece(\"" + it.id + "\")'>切片重新下载</button></td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>下载路径</td><td>" + it.dir + "/" + it.file + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>工作线程</td><td>" + it.active + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>速度</td><td>" + PanUtil.formatShortNumber(it.speed, 2) + "/s</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>总时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringSum) * 1000, 'HH:mm:ss') + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringAlready) * 1000, 'HH:mm:ss') + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>总大小</td><td>" + PanUtil.formatShortNumber(it.length, 3) + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成大小</td><td>" + PanUtil.formatShortNumber(it.complete, 3) + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>切片数</td><td>" + it.total + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成切片</td><td>" + it.count + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>转换切片</td><td>" + it.transfered + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>操作</td><td><button onclick='transfer(\"" + it.id + "\")'>合并转换</button> <button onclick='reloadPiece(\"" + it.id + "\")'>切片重新下载</button></td></tr>",
             ].join(""))
         }
         document.getElementById("tbody").innerHTML = arr.join("")
@@ -184,7 +184,10 @@
             id: id,
         }, function (re) {
             if (re.code === 500) {
-                alert("操作失败");
+                var name=re.msg.substring(re.msg.lastIndexOf("/")+1,re.msg.lastIndexOf("'"));
+                if(confirm("操作失败！\n\n是否重新下载切片："+name)){
+                    reloadPiece(id,name);
+                }
                 document.getElementById("connectSize").value = re.data;
                 document.getElementById("connectSize2").innerText = re.data;
             } else {
@@ -193,10 +196,10 @@
         })
     }
 
-    function reloadPiece(id) {
+    function reloadPiece(id,fileName) {
         PanUtil.ajax.post("/m3u8/reloadPiece", {
             id: id,
-            file:prompt("请输入重新下载文件名（包含后缀）")
+            file:fileName||prompt("请输入重新下载文件名（包含后缀）").trim()
         }, function (re) {
             if (re.code === 500) {
                 alert("操作失败");
@@ -242,7 +245,7 @@
                 if (ws.readyState === 1) {
                     sendWs("getJobs")
                 }
-            }, 100000)
+            }, 1000)
         };
     }
 

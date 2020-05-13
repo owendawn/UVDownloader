@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -102,7 +103,9 @@ public class M3U8Controller {
                 raf.write(buff, 0, len);
             }
             IOUtils.closeQuietly(raf);
-            f.renameTo(ff);
+            IOUtils.closeQuietly(bis);
+//            f.renameTo(ff);
+            Files.copy(f.toPath(), ff.toPath());
         } catch (Exception e) {
             e.printStackTrace();
             return new JsonResult.Builder<Long>().code(500).msg(e.getMessage()).build();
@@ -257,7 +260,7 @@ public class M3U8Controller {
             fileWriter.close();
             String msg = executeCommand(command, target);
             m3u8Job.getTransfered().set(m3u8Job.getTotal());
-            return new JsonResult.Builder<Object>().msg(msg).build();
+            return new JsonResult.Builder<Object>().code(msg.isEmpty()?200:500).msg(msg).build();
         } catch (IOException e) {
             e.printStackTrace();
             return new JsonResult.Builder<Object>().code(500).msg(e.getMessage()).build();
@@ -280,7 +283,9 @@ public class M3U8Controller {
             String szline;
             while ((szline = br.readLine()) != null) {
                 System.out.println(szline);
-                msg.append(szline+"\n");
+                if(szline.contains("Impossible to open")) {
+                    msg.append(szline);
+                }
             }
             int result = process.waitFor();
             System.out.println(result);
