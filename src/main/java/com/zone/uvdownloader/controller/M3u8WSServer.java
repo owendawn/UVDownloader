@@ -45,7 +45,7 @@ public class M3u8WSServer {
     public void onOpen(Session session) {
         this.session = session;
         webSocketMap.put(getMac(session), this);
-        System.out.println(getMac(this.session)+"建立连接");
+        System.out.println("\n"+getMac(this.session)+"建立连接");
     }
 
     @OnClose

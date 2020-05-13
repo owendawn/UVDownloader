@@ -64,6 +64,7 @@
 
 <script>
     var jobMap={};
+    var switchMap={};
     var ws;
     // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
     // document.getElementById("from").value = "https://www.mmicloud.com/20190404/Eoxt9tiu/2000kb/hls/index.m3u8"
@@ -140,8 +141,12 @@
         for (var k in map) {
             var it = map[k];
             arr.push([
-                "<tr><td colspan='2' style='background: #f7f7f7;color: brown;font-weight: bold;'>" + it.from + "<button data-id='"+k+"' onclick='details(this)'>详情</button></td></tr>",
-                "<tr><td>下载路径</td><td>" + it.dir + "/" + it.file + "</td></tr>",
+                "<tr><td colspan='2' style='background: #f7f7f7;color: brown;font-weight: bold;'>"
+                + it.from
+                + "<br><button data-id='"+k+"' onclick='details(this)'>详情</button>"
+                + "<br><button data-id='"+k+"' onclick='toggle(this)'>收缩/展开</button>"
+                +"</td></tr>",
+                "<tr "+(switchMap[k]===1?"style='display:none;'":"style='display:table-row;;'")+"><td>下载路径</td><td>" + it.dir + "/" + it.file + "</td></tr>",
                 "<tr><td>工作线程</td><td>" + it.active + "</td></tr>",
                 "<tr><td>速度</td><td>" + PanUtil.formatShortNumber(it.speed, 2) + "/s</td></tr>",
                 "<tr><td>总时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringSum) * 1000, 'HH:mm:ss') + "</td></tr>",
@@ -155,6 +160,23 @@
             ].join(""))
         }
         document.getElementById("tbody").innerHTML = arr.join("")
+    }
+
+    function toggle(dom) {
+        var id=dom.getAttribute("data-id");
+        var i=switchMap[id]||false;
+        dom.parentNode.parentNode.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        switchMap[id]=!Number(i)
     }
 
     function transfer(id) {
@@ -220,7 +242,7 @@
                 if (ws.readyState === 1) {
                     sendWs("getJobs")
                 }
-            }, 1000)
+            }, 100000)
         };
     }
 

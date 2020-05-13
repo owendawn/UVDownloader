@@ -67,9 +67,10 @@ public class M3U8Controller {
         }
         try {
             File f = new File(tmpDir + "/" + file);
-            if (!f.exists()) {
-                f.createNewFile();
+            if (f.exists()) {
+                f.delete();
             }
+            f.createNewFile();
             String urlRoot = m3u8Job.getItems().get(0).getUrl().substring(0, m3u8Job.getItems().get(0).getUrl().lastIndexOf("/") + 1);
             HttpsURLConnection conn = null;
             RandomAccessFile raf = null;
