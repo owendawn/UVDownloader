@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.cert.CertificateException;
@@ -19,7 +20,7 @@ import java.util.Map;
 /**
  * 2018/11/26 13:54
  * httpUrlConnection 工具类
- *
+ * <p>
  * HttpUrlConnectionUtil.HttpComunication httpComunication = HttpUrlConnectionUtil.sendHttpByGet("http://172.23.31.21/op/jmgl/jmglnew!getJieMianList.action"));
  * System.out.println(httpComunication);
  * httpComunication = HttpUrlConnectionUtil.sendHttpByPost("http://172.23.31.21/op/jmgl/jmglnew!getJieMianList.action");
@@ -29,14 +30,14 @@ import java.util.Map;
  */
 public class HttpUrlConnectionUtil {
     private static Logger log = LoggerFactory.getLogger(HttpUrlConnectionUtil.class);
-    private static ObjectMapper objectMapper=new ObjectMapper();
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
-    private static SSLSocketFactory getSSLSocketFactory(){
+    private static SSLSocketFactory getSSLSocketFactory() {
         // 创建SSLContext对象，并使用我们指定的信任管理器初始化
         TrustManager[] tm = {new X509TrustManager() {
             @Override
-            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                return new java.security.cert.X509Certificate[]{};
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[]{};
             }
 
             @Override
@@ -46,12 +47,12 @@ public class HttpUrlConnectionUtil {
             @Override
             public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             }
-        } };
+        }};
         try {
             SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");
             sslContext.init(null, tm, new java.security.SecureRandom());
             return sslContext.getSocketFactory();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -62,14 +63,20 @@ public class HttpUrlConnectionUtil {
     }
 
     public static HttpComunication sendHttpByGet(String url, Map<String, String> params) {
-        HttpsURLConnection conn = null;
+        HttpURLConnection conn = null;
         HttpComunication httpComunication = new HttpComunication();
         httpComunication.setType(HttpComunication.HttpType.GET);
         try {
-            url = url + "?" + map2FormData(params).replace("\\?+", "?");
-            conn= (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
-            if(url.startsWith("https:")){
-                conn.setSSLSocketFactory(getSSLSocketFactory());
+            if (url.contains("?")) {
+                url = url + "&" + map2FormData(params);
+            } else {
+                url = url + "?" + map2FormData(params);
+            }
+            if (url.startsWith("https:")) {
+                conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
+                ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
+            }else{
+                conn = (HttpURLConnection) new URL(null, url, new sun.net.www.protocol.http.Handler()).openConnection();
             }
             //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
             conn.setRequestMethod("GET");
@@ -94,7 +101,7 @@ public class HttpUrlConnectionUtil {
             //conn.connect()方法不必显式调用，当调用conn.getInputStream()方法时内部也会自动调用connect方法
             conn.connect();
 
-            handleResponse(conn,httpComunication);
+            handleResponse(conn, httpComunication);
             return httpComunication;
         } catch (Exception e) {
             e.printStackTrace();
@@ -105,18 +112,22 @@ public class HttpUrlConnectionUtil {
         }
         return null;
     }
+
     public static HttpComunication sendHttpByJsonPost(String url) {
-        return sendHttpByJsonPost(url,new HashMap<>(0));
+        return sendHttpByJsonPost(url, new HashMap<>(0));
     }
+
     public static HttpComunication sendHttpByJsonPost(String url, Map<String, String> params) {
-        HttpsURLConnection conn = null;
+        HttpURLConnection conn = null;
         HttpComunication httpComunication = new HttpComunication();
         httpComunication.setType(HttpComunication.HttpType.POST);
 
         try {
-            conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
-            if(url.startsWith("https:")){
-                conn.setSSLSocketFactory(getSSLSocketFactory());
+            if (url.startsWith("https:")) {
+                conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
+                ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
+            }else{
+                conn = (HttpURLConnection) new URL(null, url, new sun.net.www.protocol.http.Handler()).openConnection();
             }
             //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
             conn.setRequestMethod("POST");
@@ -145,7 +156,7 @@ public class HttpUrlConnectionUtil {
             //关闭输出流
             os.close();
 
-            handleResponse(conn,httpComunication);
+            handleResponse(conn, httpComunication);
 
             return httpComunication;
         } catch (Exception e) {
@@ -159,11 +170,11 @@ public class HttpUrlConnectionUtil {
     }
 
     public static HttpComunication sendHttpByFormPost(String url) {
-        return sendHttpByFormPost(url,new HashMap<>(0));
+        return sendHttpByFormPost(url, new HashMap<>(0));
     }
 
     public static HttpComunication sendHttpByFormPost(String url, Map<String, String> params) {
-        HttpsURLConnection conn = null;
+        HttpURLConnection conn = null;
         HttpComunication httpComunication = new HttpComunication();
         httpComunication.setType(HttpComunication.HttpType.POST);
 
@@ -171,9 +182,11 @@ public class HttpUrlConnectionUtil {
             // 请求的参数转换为byte数组
             byte[] postData = map2FormData(params).getBytes();
 
-            conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
-            if(url.startsWith("https:")){
-                conn.setSSLSocketFactory(getSSLSocketFactory());
+            if (url.startsWith("https:")) {
+                conn = (HttpsURLConnection) new URL(null, url, new sun.net.www.protocol.https.Handler()).openConnection();
+                ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
+            }else{
+                conn = (HttpURLConnection) new URL(null, url, new sun.net.www.protocol.http.Handler()).openConnection();
             }
             //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
             conn.setRequestMethod("POST");
@@ -202,7 +215,7 @@ public class HttpUrlConnectionUtil {
             //关闭输出流
             os.close();
 
-            handleResponse(conn,httpComunication);
+            handleResponse(conn, httpComunication);
 
             return httpComunication;
         } catch (Exception e) {
@@ -216,21 +229,21 @@ public class HttpUrlConnectionUtil {
     }
 
     //map to form data
-    private static String map2FormData(Map<String,String> params) throws UnsupportedEncodingException {
+    private static String map2FormData(Map<String, String> params) throws UnsupportedEncodingException {
         StringBuilder tempParams = new StringBuilder();
         int pos = 0;
         for (String key : params.keySet()) {
             if (pos > 0) {
                 tempParams.append("&");
             }
-            tempParams.append(String.format("%s=%s", key, URLEncoder.encode(params.get(key), "utf-8")));
+            tempParams.append(String.format("%s=%s", key, params.get(key) == null ? "" : URLEncoder.encode(params.get(key), "utf-8")));
             pos++;
         }
         return tempParams.toString();
     }
 
     //处理响应体
-    private static void handleResponse( HttpsURLConnection conn, HttpComunication httpComunication) throws IOException {
+    private static void handleResponse(HttpURLConnection conn, HttpComunication httpComunication) throws IOException {
         //调用getInputStream方法后，服务端才会收到请求，并阻塞式地接收服务端返回的数据
         InputStream is = conn.getInputStream();
         //将InputStream转换成byte数组,getBytesByInputStream会关闭输入流
@@ -252,7 +265,7 @@ public class HttpUrlConnectionUtil {
     }
 
     //读取请求头
-    private static String getReqeustHeader(HttpsURLConnection conn) {
+    private static String getReqeustHeader(HttpURLConnection conn) {
         Map<String, List<String>> requestHeaderMap = conn.getRequestProperties();
         Iterator<String> requestHeaderIterator = requestHeaderMap.keySet().iterator();
         StringBuilder sbRequestHeader = new StringBuilder();
@@ -268,7 +281,7 @@ public class HttpUrlConnectionUtil {
     }
 
     //读取响应头
-    private static String getResponseHeader(HttpsURLConnection conn) {
+    private static String getResponseHeader(HttpURLConnection conn) {
         Map<String, List<String>> responseHeaderMap = conn.getHeaderFields();
         int size = responseHeaderMap.size();
         StringBuilder sbResponseHeader = new StringBuilder();
@@ -285,6 +298,7 @@ public class HttpUrlConnectionUtil {
 
     /**
      * 从InputStream中读取数据，转换成byte数组，最后关闭InputStream
+     *
      * @param is 输入流
      * @return byte[]
      */
@@ -320,6 +334,7 @@ public class HttpUrlConnectionUtil {
 
     public static class HttpComunication {
         enum HttpType {GET, POST}
+
         //请求头
         private String requestHeader;
         //请求体
@@ -363,7 +378,7 @@ public class HttpUrlConnectionUtil {
 
         public String getResponseBodyStr() {
             try {
-                return new String(responseBody,"UTF-8");
+                return new String(responseBody, "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -373,7 +388,7 @@ public class HttpUrlConnectionUtil {
         public <T> T getResponseEntity(Class<T> cls) {
             try {
                 return objectMapper.readValue(getResponseBodyStr(), cls);
-            } catch (JsonProcessingException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
                 return null;
             }

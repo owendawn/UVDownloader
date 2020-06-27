@@ -39,6 +39,42 @@ public class M3U8Controller {
     private M3u8Service m3u8Service;
     public static ConcurrentHashMap<String, M3u8Job> jobs = new ConcurrentHashMap<>();
 
+    public static HashMap getJobStates() {
+        HashMap<String, Object> map = new HashMap<>();
+        for (Map.Entry<String, M3u8Job> entry : jobs.entrySet()) {
+            Map m = PFUtil.getFieldMap(entry.getValue());
+            m.remove("items");
+            List<M3u8Item> succ = new ArrayList<>();
+            List<M3u8Item> fail = new ArrayList<>();
+            List<M3u8Item> unwork = new ArrayList<>();
+            List<M3u8Item> work = new ArrayList<>();
+            entry.getValue().getItems().forEach(it -> {
+                switch (it.getState()) {
+                    case 0: {
+                        unwork.add(it);
+                        break;
+                    }
+                    case 1: {
+                        work.add(it);
+                        break;
+                    }
+                    case 2: {
+                        succ.add(it);
+                        break;
+                    }
+                    case 3: {
+                        fail.add(it);
+                        break;
+                    }
+                }
+            });
+            m.put("fail", fail);
+            map.put(entry.getKey(), m);
+        }
+        return map;
+    }
+
+
     @GetMapping("getConnectSize")
     public JsonResult getConnectSize() {
         return new JsonResult.Builder<Long>().data(CONNECT_SIZE.get()).build();
@@ -58,11 +94,15 @@ public class M3U8Controller {
     @PostMapping("reloadPiece")
     public JsonResult reloadPiece(String id, String file) {
         M3u8Job m3u8Job = jobs.get(id);
-        String tmpDir = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/tmp/";
+        String tmpDir = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/temp/";
+        String finishDir = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/finish/";
+        file = file.replace("finish_","");
+        String finalFile = file.replace("finish_","");
+        M3u8Item m3u8Item=m3u8Job.getItems().stream().filter(it->it.getFileName().equals(finalFile)||it.getFileName().equals("finish_"+finalFile)).findFirst().get();
         if (file.contains("finish_")) {
             file = file.substring("finish_".length());
         }
-        File ff = new File(tmpDir + "/finish_" + file);
+        File ff = new File(finishDir + "/finish_" + file);
         if (ff.exists()) {
             ff.delete();
         }
@@ -76,7 +116,7 @@ public class M3U8Controller {
             HttpsURLConnection conn = null;
             RandomAccessFile raf = null;
             BufferedInputStream bis = null;
-
+            m3u8Item.setState(1);
             raf = new RandomAccessFile(f.getAbsoluteFile(), "rw");
             conn = (HttpsURLConnection) new URL(null, urlRoot + file, new sun.net.www.protocol.https.Handler()).openConnection();
             if (m3u8Job.getItems().get(0).getUrl().startsWith("https:")) {
@@ -98,14 +138,25 @@ public class M3U8Controller {
             conn.connect();
             bis = new BufferedInputStream(conn.getInputStream());
             int len = 0;
+            long reLen=0;
             byte[] buff = new byte[1024];
             while ((len = bis.read(buff)) > 0) {
                 raf.write(buff, 0, len);
+                reLen+=len;
             }
             IOUtils.closeQuietly(raf);
             IOUtils.closeQuietly(bis);
-//            f.renameTo(ff);
+            conn.disconnect();
+
+//            boolean re=f.renameTo(ff);
             Files.copy(f.toPath(), ff.toPath());
+            f.delete();
+            m3u8Item.setState(2);
+            m3u8Item.setLength(reLen);
+            m3u8Job.getLength().addAndGet(reLen);
+            m3u8Item.getComplete().set(reLen);
+            m3u8Job.getComplete().addAndGet(reLen);
+            m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
         } catch (Exception e) {
             e.printStackTrace();
             return new JsonResult.Builder<Long>().code(500).msg(e.getMessage()).build();
@@ -124,6 +175,24 @@ public class M3U8Controller {
             List<M3u8Item> items = new ArrayList<>();
             AtomicReference<M3u8Item> tmp = new AtomicReference<>(null);
             Double duringSum = 0D;
+
+            File root = new File(m3u8Job.getDir() + "/" + m3u8Job.getFile());
+            if (root.exists()) {
+//                m3u8Job.setFile(m3u8Job.getFile() + "_" + System.currentTimeMillis());
+//                root = new File(m3u8Job.getDir() + "/" + m3u8Job.getFile());
+//                root.mkdirs();
+            }else {
+                root.mkdirs();
+            }
+            System.out.println("存放路径：" + root.getParent());
+            File tmpF = new File(root.getAbsolutePath() + "/temp");
+            if (!tmpF.exists()) {
+                tmpF.mkdirs();
+            }
+            File finishF = new File(root.getAbsolutePath() + "/finish");
+            if (!finishF.exists()) {
+                finishF.mkdirs();
+            }
             for (String str : list) {
                 str = str.trim();
                 if (str.length() <= 0) {
@@ -151,6 +220,10 @@ public class M3U8Controller {
                         tmp.get().setUrl(urlNoEnd + "/" + str);
                         tmp.get().setFileName(str);
                     }
+                    File tempTarget = new File(tmpF.getAbsolutePath() + "/" + tmp.get().getFileName());
+                    File finishTarget = new File(finishF.getAbsolutePath() + "/finish_" + tmp.get().getFileName());
+                    tmp.get().setTmpTarget(tempTarget.getAbsolutePath());
+                    tmp.get().setFinishTarget(finishTarget.getAbsolutePath());
                     items.add(tmp.get());
                     tmp.set(null);
                 }
@@ -162,6 +235,23 @@ public class M3U8Controller {
             m3u8Job.setId(m3u8Job.getFrom() + "_" + m3u8Job.getDir() + "/" + m3u8Job.getFile());
             jobs.put(m3u8Job.getId(), m3u8Job);
             JobWorkerOverseer.WORK_POOL.add(new M3u8JobWorker(m3u8Job));
+            //-------------------------------------------------
+            String listPath = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/filelist.txt";
+            File file = new File(listPath);
+            if (file.exists()) {
+                file.delete();
+            }
+            file.createNewFile();
+            FileWriter fileWriter = new FileWriter(file, true);
+            for (int i = 0; i < m3u8Job.getItems().size(); i++) {
+                String realFileName = "finish_" + m3u8Job.getItems().get(i).getFileName();
+                fileWriter.write("file 'finish/" + realFileName + "'\n");
+                fileWriter.flush();
+            }
+            fileWriter.close();
+            //-------------------------------------------------
+
+
             Map map = PFUtil.getFieldMap(m3u8Job);
             map.remove("items");
             return new JsonResult.Builder<Object>().data(map).build();
@@ -172,13 +262,8 @@ public class M3U8Controller {
 
     @GetMapping("getJobs")
     public JsonResult getJobs() {
-        HashMap<String, Object> map = new HashMap<>();
-        for (Map.Entry<String, M3u8Job> entry : jobs.entrySet()) {
-            Map m = PFUtil.getFieldMap(entry.getValue());
-            m.remove("items");
-            map.put(entry.getKey(), m);
-        }
-        return new JsonResult.Builder<Object>().data(map).build();
+
+        return new JsonResult.Builder<Object>().data(getJobStates()).build();
     }
 
     /**
@@ -246,21 +331,9 @@ public class M3U8Controller {
         try {
             String listPath = m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/filelist.txt";
             String command = (new File("").getCanonicalPath().replaceAll("\\\\", "/") + "/ffmpeg.exe -f concat -i \"" + listPath + "\" -c copy " + target);
-            File file = new File(listPath);
-            if (file.exists()) {
-                file.delete();
-            }
-            file.createNewFile();
-            FileWriter fileWriter = new FileWriter(file, true);
-            for (int i = 0; i < m3u8Job.getItems().size(); i++) {
-                String realFileName = m3u8Job.getItems().get(i).getTarget().substring(m3u8Job.getItems().get(i).getTarget().lastIndexOf("/") + 1);
-                fileWriter.write("file 'tmp/" + realFileName + "'\n");
-                fileWriter.flush();
-            }
-            fileWriter.close();
             String msg = executeCommand(command, target);
             m3u8Job.getTransfered().set(m3u8Job.getTotal());
-            return new JsonResult.Builder<Object>().code(msg.isEmpty()?200:500).msg(msg).build();
+            return new JsonResult.Builder<Object>().code(msg.isEmpty() ? 200 : 500).msg(msg).build();
         } catch (IOException e) {
             e.printStackTrace();
             return new JsonResult.Builder<Object>().code(500).msg(e.getMessage()).build();
@@ -283,7 +356,7 @@ public class M3U8Controller {
             String szline;
             while ((szline = br.readLine()) != null) {
                 System.out.println(szline);
-                if(szline.contains("Impossible to open")) {
+                if (szline.contains("Impossible to open")) {
                     msg.append(szline);
                 }
             }

@@ -65,13 +65,7 @@ public class M3u8WSServer {
         }
         switch (message.getCommand()){
             case "getJobs":{
-                HashMap<String, Object> map = new HashMap<>();
-                for (Map.Entry<String, M3u8Job> entry : jobs.entrySet()) {
-                    Map m = PFUtil.getFieldMap(entry.getValue());
-                    m.remove("items");
-                    map.put(entry.getKey(), m);
-                }
-                sendMessage(new WsCommand().setCommand(message.getCommand()+".res").setData(map));
+                sendMessage(new WsCommand().setCommand(message.getCommand()+".res").setData(M3U8Controller.getJobStates()));
                 break;
             }
             default:{

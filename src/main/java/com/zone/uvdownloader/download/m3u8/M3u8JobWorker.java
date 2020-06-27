@@ -10,6 +10,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.cert.CertificateException;
@@ -61,12 +62,7 @@ public class M3u8JobWorker implements BaseWorker {
             }
         });
         System.out.println("开始下载");
-        File root = new File(m3u8Job.getDir() + "/" + m3u8Job.getFile() + "/tmp");
-        if (!root.exists()) {
-            root.mkdirs();
-        }
-        System.out.println("存放路径：" + root.getParent());
-        String tmpPath = root.getAbsolutePath();
+
         for (int i = 0; i < jobList.size(); i++) {
             M3u8Item m3u8Item = jobList.get(i);
             if (pool.getActiveCount() < M3U8Controller.CONNECT_SIZE.get()) {
@@ -75,40 +71,42 @@ public class M3u8JobWorker implements BaseWorker {
                     public void run() {
                         m3u8Job.getActive().incrementAndGet();
                         long length = 0;
-                        HttpsURLConnection conn = null;
+                        HttpURLConnection conn = null;
                         RandomAccessFile file = null;
                         BufferedInputStream bis = null;
-                        File target = new File(tmpPath + "/" + m3u8Item.getFileName());
-                        File finishtTarget = new File(tmpPath + "/finish_" + m3u8Item.getFileName());
+                        File finishtTarget=new File(m3u8Item.getFinishTarget());
+                        File tmpTarget=new File(m3u8Item.getTmpTarget());
                         try {
-                            if (finishtTarget.exists() && finishtTarget.isFile() && finishtTarget.length() > 0) {
+                            if (finishtTarget.exists() &&finishtTarget.isFile() && finishtTarget.length() > 0) {
                                 length = finishtTarget.length();
 //                                System.out.print("F");
-                                m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
+                                m3u8Job.getCount().incrementAndGet();
                                 m3u8Job.getLength().addAndGet(length);
                                 m3u8Item.setLength(length);
-                                m3u8Job.getCount().incrementAndGet();
                                 m3u8Item.getComplete().set(length);
                                 m3u8Job.getComplete().addAndGet(length);
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
                                 log();
+                                m3u8Item.setState(2);
                                 return;
                             } else if (finishtTarget.length() <= 0) {
                                 finishtTarget.delete();
                             }
-                            if (target.exists() && target.isFile()) {
-                                length = target.length();
+
+                            if (tmpTarget.exists() && tmpTarget.isFile()) {
+                                length = tmpTarget.length();
 //                                System.out.print("A");
                             } else {
-                                target.createNewFile();
+                                tmpTarget.createNewFile();
                             }
-                            m3u8Item.setTarget(target.getAbsolutePath().replaceAll("\\\\", "/"));
-                            file = new RandomAccessFile(target.getAbsoluteFile(), "rw");
+                            m3u8Item.setState(1);
+                            file = new RandomAccessFile(tmpTarget.getAbsoluteFile(), "rw");
 
-
-                            conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
                             if (m3u8Item.getUrl().startsWith("https:")) {
-                                conn.setSSLSocketFactory(getSSLSocketFactory());
+                                conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
+                                ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
+                            }else{
+                                conn = (HttpURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.http.Handler()).openConnection();
                             }
                             conn.setConnectTimeout(30 * 1000);
                             long reLen = 0;
@@ -120,24 +118,25 @@ public class M3u8JobWorker implements BaseWorker {
 //                                e.printStackTrace();
                             }
                             conn.disconnect();
+
+                            m3u8Job.getCount().incrementAndGet();
                             if (length >= reLen) {
                                 m3u8Item.setLength(reLen);
                                 m3u8Job.getLength().addAndGet(reLen);
-//                                System.out.println("无需下载：" + m3u8Item.getUrl());
-                                m3u8Job.getCount().incrementAndGet();
                                 m3u8Item.getComplete().set(reLen);
                                 m3u8Job.getComplete().addAndGet(reLen);
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
                                 IOUtils.closeQuietly(file);
                                 file = null;
-                                target.renameTo(finishtTarget);
-                                m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
+                                tmpTarget.renameTo(finishtTarget);
                                 log();
                             } else {
                                 file.seek(length);
-                                conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
                                 if (m3u8Item.getUrl().startsWith("https:")) {
-                                    conn.setSSLSocketFactory(getSSLSocketFactory());
+                                    conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
+                                    ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
+                                }else{
+                                    conn = (HttpURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.http.Handler()).openConnection();
                                 }
                                 //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
                                 conn.setRequestMethod("GET");
@@ -163,30 +162,41 @@ public class M3u8JobWorker implements BaseWorker {
                                     m3u8Item.getComplete().addAndGet(len);
                                     m3u8Job.getComplete().addAndGet(len);
                                 }
-                                m3u8Job.getCount().incrementAndGet();
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
                                 IOUtils.closeQuietly(file);
                                 file = null;
-                                target.renameTo(finishtTarget);
-                                m3u8Item.setTarget(finishtTarget.getAbsolutePath().replaceAll("\\\\", "/"));
-//                                System.out.print(".");
+                                tmpTarget.renameTo(finishtTarget);
                                 log();
+                                m3u8Item.setState(2);
                             }
                         } catch (SocketTimeoutException | ConnectException e) {
-                            System.out.println("异常重置：" + m3u8Item.getUrl());
-                            this.run();
+                            System.out.println("异常重置：(" + m3u8Item.getUrl()+"):"+e.getMessage());
+                            if(tmpTarget.exists()) {
+                                tmpTarget.delete();
+                            }
+                            m3u8Item.setState(3);
                         } catch (Exception e) {
                             System.out.println("异常：" + m3u8Item.getUrl());
                             e.printStackTrace();
-                            IOUtils.closeQuietly(file);
-                            file = null;
-                            target.delete();
+                            if(tmpTarget.exists()) {
+                                tmpTarget.delete();
+                            }
+                            m3u8Item.setState(3);
                         } finally {
                             if (conn != null) {
                                 conn.disconnect();
                             }
                             IOUtils.closeQuietly(bis);
                             IOUtils.closeQuietly(file);
+                            file = null;
+                            if(m3u8Item.getState()!=2){
+                                if(tmpTarget.exists()) {
+                                    tmpTarget.delete();
+                                }
+                                if(finishtTarget.exists()) {
+                                    finishtTarget.delete();
+                                }
+                            }
                             m3u8Job.getActive().decrementAndGet();
                         }
                     }

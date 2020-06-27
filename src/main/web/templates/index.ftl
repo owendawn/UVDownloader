@@ -7,6 +7,10 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" href="PanCss.css">
     <script type="application/javascript" src="PanUtil.js"></script>
+    <style>
+        #tbody tr td{word-break: break-all;}
+        .hideFails{display: none!important;}
+    </style>
 </head>
 
 <body>
@@ -51,7 +55,7 @@
         <table>
             <thead>
             <tr>
-                <th>参数</th>
+                <th style="width:5rem;">参数</th>
                 <th>值</th>
             </tr>
             </thead>
@@ -65,10 +69,12 @@
 <script>
     var jobMap={};
     var switchMap={};
+    var failSwitchMap={};
     var ws;
     // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
     // document.getElementById("from").value = "https://www.mmicloud.com/20190404/Eoxt9tiu/2000kb/hls/index.m3u8"
     // document.getElementById("from").value = "https://s2.135-cdn.com/2020/04/10/o762FVjpITReMJSB/index.m3u8"
+    document.getElementById("from").value = "https://videos8.jsyunbf.com/20190717/eAjPtGHN/950kb/hls/index.m3u8?sign=a729c317b39341f710c5ed34f65c0dde197e4c2495819e3877c7f6fa6e287db58a74ea8394349fed43e75d7e9152f26eda827d9e21d9ff448246efd887fb517b"
 
     function getFileName() {
         var url = document.getElementById("from").value.trim();
@@ -154,12 +160,33 @@
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>总大小</td><td>" + PanUtil.formatShortNumber(it.length, 3) + "</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成大小</td><td>" + PanUtil.formatShortNumber(it.complete, 3) + "</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>切片数</td><td>" + it.total + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成切片</td><td>" + it.count + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>结束切片</td><td>" + it.count + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>失败切片</td><td>" + it.fail.length +(it.fail.length<=0?"":" <button onclick='toggleFails(\"fails_"+it.id+"\")'>收缩/展开</button>")+"</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+" id='fails_"+it.id+"' "+(failSwitchMap["fails_"+it.id]?"":"class='hideFails'")+">",
+                "   <td colspan='2'>" ,
+                "       <div >",
+                it.fail.map(function(o,idx){
+                    return "<div style='word-break: break-all;'><button onclick='reloadPiece(\"" + it.id + "\",\"" + o.fileName + "\")'>重试</button> "+o.url+"</div>";
+                }).join(""),
+                "       </div>",
+                "   </td>",
+                "</tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>转换切片</td><td>" + it.transfered + "</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>操作</td><td><button onclick='transfer(\"" + it.id + "\")'>合并转换</button> <button onclick='reloadPiece(\"" + it.id + "\")'>切片重新下载</button></td></tr>",
             ].join(""))
         }
         document.getElementById("tbody").innerHTML = arr.join("")
+    }
+
+    function toggleFails(id) {
+        var dom=document.getElementById(id);
+        if(dom.className){
+            dom.className="";
+            failSwitchMap[id]=true
+        }else{
+            dom.className="hideFails";
+            failSwitchMap[id]=false
+        }
     }
 
     function toggle(dom) {
@@ -176,6 +203,8 @@
         dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
         dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
         dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
         switchMap[id]=!Number(i)
     }
 
@@ -185,7 +214,7 @@
         }, function (re) {
             if (re.code === 500) {
                 var name=re.msg.substring(re.msg.lastIndexOf("/")+1,re.msg.lastIndexOf("'"));
-                if(confirm("操作失败！\n\n是否重新下载切片："+name)){
+                if(confirm("转换失败！\n\n是否重新下载切片："+name)){
                     reloadPiece(id,name);
                 }
                 document.getElementById("connectSize").value = re.data;
@@ -202,9 +231,9 @@
             file:fileName||prompt("请输入重新下载文件名（包含后缀）").trim()
         }, function (re) {
             if (re.code === 500) {
-                alert("操作失败");
+                alert("下载切片失败");
             } else {
-                alert("操作成功")
+                alert("下载切片成功")
             }
         })
     }
