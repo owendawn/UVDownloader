@@ -9,10 +9,7 @@ import javax.net.ssl.*;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.net.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -74,10 +71,10 @@ public class M3u8JobWorker implements BaseWorker {
                         HttpURLConnection conn = null;
                         RandomAccessFile file = null;
                         BufferedInputStream bis = null;
-                        File finishtTarget=new File(m3u8Item.getFinishTarget());
-                        File tmpTarget=new File(m3u8Item.getTmpTarget());
+                        File finishtTarget = new File(m3u8Item.getFinishTarget());
+                        File tmpTarget = new File(m3u8Item.getTmpTarget());
                         try {
-                            if (finishtTarget.exists() &&finishtTarget.isFile() && finishtTarget.length() > 0) {
+                            if (finishtTarget.exists() && finishtTarget.isFile() && finishtTarget.length() > 0) {
                                 length = finishtTarget.length();
 //                                System.out.print("F");
                                 m3u8Job.getCount().incrementAndGet();
@@ -105,22 +102,16 @@ public class M3u8JobWorker implements BaseWorker {
                             if (m3u8Item.getUrl().startsWith("https:")) {
                                 conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
                                 ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
-                            }else{
+                            } else {
                                 conn = (HttpURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.http.Handler()).openConnection();
                             }
                             conn.setConnectTimeout(30 * 1000);
                             long reLen = 0;
-                            try {
-                                reLen = Long.parseLong(conn.getHeaderField("Content-Length"));
-                            } catch (Exception e) {
-                                this.run();
-                                return;
-//                                e.printStackTrace();
-                            }
+                            reLen = Long.parseLong(conn.getHeaderField("Content-Length"));
                             conn.disconnect();
 
-                            m3u8Job.getCount().incrementAndGet();
-                            if (length >= reLen) {
+
+                            if (false && length >= reLen) {
                                 m3u8Item.setLength(reLen);
                                 m3u8Job.getLength().addAndGet(reLen);
                                 m3u8Item.getComplete().set(reLen);
@@ -135,7 +126,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 if (m3u8Item.getUrl().startsWith("https:")) {
                                     conn = (HttpsURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.https.Handler()).openConnection();
                                     ((HttpsURLConnection) conn).setSSLSocketFactory(getSSLSocketFactory());
-                                }else{
+                                } else {
                                     conn = (HttpURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.http.Handler()).openConnection();
                                 }
                                 //HttpURLConnection默认就是用GET发送请求，所以下面的setRequestMethod可以省略
@@ -147,7 +138,8 @@ public class M3u8JobWorker implements BaseWorker {
                                 //禁用网络缓存
                                 conn.setUseCaches(false);
                                 // 设置连接主机超时时间
-                                conn.setConnectTimeout(30 * 1000);
+                                conn.setConnectTimeout(10 * 1000);
+                                conn.setConnectTimeout(60 * 1000);
                                 //在对各种参数配置完成后，通过调用connect方法建立TCP连接，但是并未真正获取数据
                                 //conn.connect()方法不必显式调用，当调用conn.getInputStream()方法时内部也会自动调用connect方法
                                 conn.addRequestProperty("Range", "bytes=" + length + "-" + reLen);
@@ -169,16 +161,20 @@ public class M3u8JobWorker implements BaseWorker {
                                 log();
                                 m3u8Item.setState(2);
                             }
-                        } catch (SocketTimeoutException | ConnectException e) {
-                            System.out.println("异常重置：(" + m3u8Item.getUrl()+"):"+e.getMessage());
-                            if(tmpTarget.exists()) {
+                            m3u8Job.getCount().incrementAndGet();
+                            m3u8Job.getActive().decrementAndGet();
+                        } catch (SocketException |SocketTimeoutException  e) {
+                            m3u8Job.getActive().decrementAndGet();
+                            System.out.println("异常重置：(" + m3u8Item.getUrl() + "):" + e.getMessage());
+                            if (tmpTarget.exists()) {
                                 tmpTarget.delete();
                             }
                             m3u8Item.setState(3);
                         } catch (Exception e) {
+                            m3u8Job.getActive().decrementAndGet();
                             System.out.println("异常：" + m3u8Item.getUrl());
                             e.printStackTrace();
-                            if(tmpTarget.exists()) {
+                            if (tmpTarget.exists()) {
                                 tmpTarget.delete();
                             }
                             m3u8Item.setState(3);
@@ -189,15 +185,15 @@ public class M3u8JobWorker implements BaseWorker {
                             IOUtils.closeQuietly(bis);
                             IOUtils.closeQuietly(file);
                             file = null;
-                            if(m3u8Item.getState()!=2){
-                                if(tmpTarget.exists()) {
+                            if (m3u8Item.getState() != 2) {
+                                if (tmpTarget.exists()) {
                                     tmpTarget.delete();
                                 }
-                                if(finishtTarget.exists()) {
+                                if (finishtTarget.exists()) {
                                     finishtTarget.delete();
                                 }
                             }
-                            m3u8Job.getActive().decrementAndGet();
+
                         }
                     }
                 });

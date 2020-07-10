@@ -156,6 +156,7 @@ public class M3U8Controller {
             m3u8Job.getLength().addAndGet(reLen);
             m3u8Item.getComplete().set(reLen);
             m3u8Job.getComplete().addAndGet(reLen);
+            m3u8Job.getCount().incrementAndGet();
             m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
         } catch (Exception e) {
             e.printStackTrace();

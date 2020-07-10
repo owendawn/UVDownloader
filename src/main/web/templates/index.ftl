@@ -74,7 +74,7 @@
     // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
     // document.getElementById("from").value = "https://www.mmicloud.com/20190404/Eoxt9tiu/2000kb/hls/index.m3u8"
     // document.getElementById("from").value = "https://s2.135-cdn.com/2020/04/10/o762FVjpITReMJSB/index.m3u8"
-    document.getElementById("from").value = "https://videos8.jsyunbf.com/20190717/eAjPtGHN/950kb/hls/index.m3u8?sign=a729c317b39341f710c5ed34f65c0dde197e4c2495819e3877c7f6fa6e287db58a74ea8394349fed43e75d7e9152f26eda827d9e21d9ff448246efd887fb517b"
+    // document.getElementById("from").value = "https://videos8.jsyunbf.com/20190717/eAjPtGHN/950kb/hls/index.m3u8?sign=a729c317b39341f710c5ed34f65c0dde197e4c2495819e3877c7f6fa6e287db58a74ea8394349fed43e75d7e9152f26eda827d9e21d9ff448246efd887fb517b"
 
     function getFileName() {
         var url = document.getElementById("from").value.trim();
