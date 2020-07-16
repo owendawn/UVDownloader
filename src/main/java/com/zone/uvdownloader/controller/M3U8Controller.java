@@ -233,6 +233,7 @@ public class M3U8Controller {
             m3u8Job.setItems(items);
             m3u8Job.setMsg(msgs);
             m3u8Job.setTotal(items.size());
+            m3u8Job.getActive().set(0);
             m3u8Job.setId(m3u8Job.getFrom() + "_" + m3u8Job.getDir() + "/" + m3u8Job.getFile());
             jobs.put(m3u8Job.getId(), m3u8Job);
             JobWorkerOverseer.WORK_POOL.add(new M3u8JobWorker(m3u8Job));

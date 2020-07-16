@@ -88,11 +88,13 @@
 
     getFileName();
 
-    PanUtil.ajax.get("/m3u8/getConnectSize", {}, function (re) {
-        document.getElementById("connectSize").value = re.data;
-        document.getElementById("connectSize2").innerText = re.data;
-    });
-
+    function getConnectSize() {
+        PanUtil.ajax.get("/m3u8/getConnectSize", {}, function (re) {
+            document.getElementById("connectSize").value = re.data;
+            document.getElementById("connectSize2").innerText = re.data;
+        });
+    }
+    getConnectSize();
     function download() {
         PanUtil.ajax.post("/m3u8/download", {
             from: document.getElementById("from").value.trim(),
@@ -129,6 +131,7 @@
     }
 
     function refreshJobs() {
+        getConnectSize();
         PanUtil.ajax.get("/m3u8/getJobs", {}, function (re) {
             parseJobs(re.data)
             if(ws){
@@ -160,7 +163,7 @@
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>总大小</td><td>" + PanUtil.formatShortNumber(it.length, 3) + "</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成大小</td><td>" + PanUtil.formatShortNumber(it.complete, 3) + "</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>切片数</td><td>" + it.total + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>结束切片</td><td>" + it.count + "</td></tr>",
+                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成切片</td><td>" + it.count + "</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>失败切片</td><td>" + it.fail.length +(it.fail.length<=0?"":" <button onclick='toggleFails(\"fails_"+it.id+"\")'>收缩/展开</button>")+"</td></tr>",
                 "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+" id='fails_"+it.id+"' "+(failSwitchMap["fails_"+it.id]?"":"class='hideFails'")+">",
                 "   <td colspan='2'>" ,

@@ -49,6 +49,7 @@ public class M3u8JobWorker implements BaseWorker {
                             m3u8Job.getSpeed().set(
                                     Math.round(1D * (m3u8Job.getComplete().longValue() - complete) / during * 1000)
                             );
+                            log();
                         }
                         Thread.sleep(500);
                     } catch (Exception e) {
@@ -83,6 +84,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 m3u8Item.getComplete().set(length);
                                 m3u8Job.getComplete().addAndGet(length);
                                 m3u8Job.getDuringAlready().addAndGet(m3u8Item.getDuring());
+                                m3u8Job.getActive().decrementAndGet();
                                 log();
                                 m3u8Item.setState(2);
                                 return;
@@ -108,8 +110,14 @@ public class M3u8JobWorker implements BaseWorker {
                             conn.setConnectTimeout(10 * 1000);
                             conn.setReadTimeout(60 * 1000);
                             long reLen = 0;
-                            reLen = Long.parseLong(conn.getHeaderField("Content-Length"));
+                            String contentLength=conn.getHeaderField("Content-Length");
                             conn.disconnect();
+                            if(contentLength==null){
+                                m3u8Job.getActive().decrementAndGet();
+                                System.out.println("\n获取媒体大小异常：" + m3u8Item.getUrl());
+                                return;
+                            }
+                            reLen = Long.parseLong(contentLength);
 
 
                             if (false && length >= reLen) {
@@ -166,14 +174,14 @@ public class M3u8JobWorker implements BaseWorker {
                             m3u8Job.getActive().decrementAndGet();
                         } catch (SocketException |SocketTimeoutException  e) {
                             m3u8Job.getActive().decrementAndGet();
-                            System.out.println("异常重置：(" + m3u8Item.getUrl() + "):" + e.getMessage());
+                            System.out.println("\n异常重置：(" + m3u8Item.getUrl() + "):" + e.getMessage());
                             if (tmpTarget.exists()) {
                                 tmpTarget.delete();
                             }
                             m3u8Item.setState(3);
                         } catch (Exception e) {
                             m3u8Job.getActive().decrementAndGet();
-                            System.out.println("异常：" + m3u8Item.getUrl());
+                            System.out.println("\n异常：" + m3u8Item.getUrl());
                             e.printStackTrace();
                             if (tmpTarget.exists()) {
                                 tmpTarget.delete();
