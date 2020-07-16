@@ -105,7 +105,8 @@ public class M3u8JobWorker implements BaseWorker {
                             } else {
                                 conn = (HttpURLConnection) new URL(null, m3u8Item.getUrl(), new sun.net.www.protocol.http.Handler()).openConnection();
                             }
-                            conn.setConnectTimeout(30 * 1000);
+                            conn.setConnectTimeout(10 * 1000);
+                            conn.setReadTimeout(60 * 1000);
                             long reLen = 0;
                             reLen = Long.parseLong(conn.getHeaderField("Content-Length"));
                             conn.disconnect();
@@ -139,7 +140,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 conn.setUseCaches(false);
                                 // 设置连接主机超时时间
                                 conn.setConnectTimeout(10 * 1000);
-                                conn.setConnectTimeout(60 * 1000);
+                                conn.setReadTimeout(60 * 1000);
                                 //在对各种参数配置完成后，通过调用connect方法建立TCP连接，但是并未真正获取数据
                                 //conn.connect()方法不必显式调用，当调用conn.getInputStream()方法时内部也会自动调用connect方法
                                 conn.addRequestProperty("Range", "bytes=" + length + "-" + reLen);
