@@ -214,13 +214,21 @@ public class M3U8Controller {
                         msgs.add(str);
                     }
                 } else {
-                    if (str.startsWith("/")) {
+                    if(str.startsWith("http://")||str.startsWith("https://")){
+                        tmp.get().setUrl( str);
+                    }else if (str.startsWith("/")) {
                         tmp.get().setUrl(urlRoot + str);
-                        tmp.get().setFileName(str.substring(str.lastIndexOf("/") + 1));
                     } else {
                         tmp.get().setUrl(urlNoEnd + "/" + str);
-                        tmp.get().setFileName(str);
                     }
+                    String tmp2=tmp.get().getUrl();
+                    if(tmp2.contains("?")){
+                        tmp2=tmp2.substring(0,tmp2.indexOf("?"));
+                    }
+                    if(tmp2.contains("/")) {
+                        tmp2 = tmp2.substring(tmp2.lastIndexOf("/")+1);
+                    }
+                    tmp.get().setFileName(tmp2);
                     File tempTarget = new File(tmpF.getAbsolutePath() + "/" + tmp.get().getFileName());
                     File finishTarget = new File(finishF.getAbsolutePath() + "/finish_" + tmp.get().getFileName());
                     tmp.get().setTmpTarget(tempTarget.getAbsolutePath());
