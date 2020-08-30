@@ -15,7 +15,7 @@
 
 <body>
 <h1 style="margin:6px;text-align: center;font-size: 7rem;line-height:7rem;padding: 1rem;text-shadow: 16px 22px 22px #504040;">
-    ${projectName}
+    ${projectName!""}
 </h1>
 <div style="display: flex">
     <article style="width: 40%;">
@@ -30,8 +30,8 @@
         <hr>
         <p>
             下载路径
-            <input type="text" id="dir" value="${desktopPath}">
-            <button onclick="document.getElementById('dir').value='${desktopPath}'">桌面</button>
+            <input type="text" id="dir" value="${desktopPath!''}">
+            <button onclick="document.getElementById('dir').value='${desktopPath!''}'">桌面</button>
         </p>
         <p>
             文件名

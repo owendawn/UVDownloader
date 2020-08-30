@@ -17,11 +17,6 @@ import javax.swing.filechooser.FileSystemView;
 public class ViewController {
     @Value("${project.name}")
     private String projectName;
-    private static final String desktopPath = FileSystemView
-            .getFileSystemView()
-            .getHomeDirectory()
-            .getAbsolutePath()
-            .replaceAll("\\\\","/");
 
     /**
      * 2019/12/7 14:28
@@ -34,7 +29,11 @@ public class ViewController {
     @RequestMapping(value = "/**", method = RequestMethod.GET)
     public String path(HttpServletRequest request, ModelMap modelMap) {
         modelMap.put("projectName", projectName);
-        modelMap.put("desktopPath", desktopPath);
+        modelMap.put("desktopPath", FileSystemView
+                .getFileSystemView()
+                .getHomeDirectory()
+                .getAbsolutePath()
+                .replaceAll("\\\\","/"));
         return request.getRequestURI().replace(request.getContextPath() + "/view/", "/");
     }
 }
