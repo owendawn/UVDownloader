@@ -51,6 +51,10 @@ public class M3u8JobWorker implements BaseWorker {
                             );
                             log();
                         }
+                        if(m3u8Job.isEnd()){
+                            log();
+                            break;
+                        }
                         Thread.sleep(500);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -114,6 +118,7 @@ public class M3u8JobWorker implements BaseWorker {
                             conn.disconnect();
                             if(contentLength==null){
                                 m3u8Job.getActive().decrementAndGet();
+                                m3u8Item.setState(3);
                                 System.out.println("\n获取媒体大小异常：" + m3u8Item.getUrl());
                                 return;
                             }
@@ -129,6 +134,7 @@ public class M3u8JobWorker implements BaseWorker {
                                 IOUtils.closeQuietly(file);
                                 file = null;
                                 tmpTarget.renameTo(finishtTarget);
+                                m3u8Item.setState(2);
                                 log();
                             } else {
                                 file.seek(length);
@@ -174,19 +180,19 @@ public class M3u8JobWorker implements BaseWorker {
                             m3u8Job.getActive().decrementAndGet();
                         } catch (SocketException |SocketTimeoutException  e) {
                             m3u8Job.getActive().decrementAndGet();
+                            m3u8Item.setState(3);
                             System.out.println("\n异常重置：(" + m3u8Item.getUrl() + "):" + e.getMessage());
                             if (tmpTarget.exists()) {
                                 tmpTarget.delete();
                             }
-                            m3u8Item.setState(3);
                         } catch (Exception e) {
                             m3u8Job.getActive().decrementAndGet();
+                            m3u8Item.setState(3);
                             System.out.println("\n异常：" + m3u8Item.getUrl());
                             e.printStackTrace();
                             if (tmpTarget.exists()) {
                                 tmpTarget.delete();
                             }
-                            m3u8Item.setState(3);
                         } finally {
                             if (conn != null) {
                                 conn.disconnect();

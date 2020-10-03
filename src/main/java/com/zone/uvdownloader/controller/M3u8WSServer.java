@@ -6,6 +6,7 @@ import com.zone.uvdownloader.base.config.WebSocketConfigurator;
 import com.zone.uvdownloader.download.m3u8.M3u8Job;
 import com.zone.uvdownloader.entity.WsCommand;
 import com.zone.uvdownloader.util.PFUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,14 +45,17 @@ public class M3u8WSServer {
     @OnOpen
     public void onOpen(Session session) {
         this.session = session;
-        webSocketMap.put(getMac(session), this);
-        System.out.println("\n"+getMac(this.session)+"建立连接");
+        webSocketMap.put(session.getId(), this);
+        System.out.println("\n"+getMac(this.session)+"【"+session.getId()+"】建立连接");
     }
 
     @OnClose
     public void onClose() {
-        webSocketMap.remove(getMac(this.session));
-        System.out.println(getMac(this.session)+"断开连接");
+        String  mac=getMac(this.session);
+        if(webSocketMap.get(session.getId())!=null) {
+            webSocketMap.remove(session.getId());
+        }
+        System.out.println(getMac(this.session)+"【"+session.getId()+"】断开连接");
     }
 
     @OnMessage

@@ -23,4 +23,9 @@ C:\Users\Administrator\AppData\Roaming\Microsoft\Windows\Start Menu\Programs
 ③   
 点击右键固定到开始屏幕
 ```
-
+## 注意事项：
+```$xslt
+使用项目前请先下载ffmpeg.exe放在项目根目录下，否则无法使用视频片合并功能
+```
+### 下载地址：
+> http://ffmpeg.org/download.html

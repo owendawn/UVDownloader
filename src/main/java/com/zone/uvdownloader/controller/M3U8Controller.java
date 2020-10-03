@@ -48,6 +48,7 @@ public class M3U8Controller {
             List<M3u8Item> fail = new ArrayList<>();
             List<M3u8Item> unwork = new ArrayList<>();
             List<M3u8Item> work = new ArrayList<>();
+            List<M3u8Item> other = new ArrayList<>();
             entry.getValue().getItems().forEach(it -> {
                 switch (it.getState()) {
                     case 0: {
@@ -65,6 +66,9 @@ public class M3U8Controller {
                     case 3: {
                         fail.add(it);
                         break;
+                    }
+                    default:{
+                        other.add(it);
                     }
                 }
             });
@@ -132,6 +136,7 @@ public class M3U8Controller {
             conn.setUseCaches(false);
             // 设置连接主机超时时间
             conn.setConnectTimeout(30 * 1000);
+            conn.setReadTimeout(2*60 * 1000);
             //在对各种参数配置完成后，通过调用connect方法建立TCP连接，但是并未真正获取数据
             //conn.connect()方法不必显式调用，当调用conn.getInputStream()方法时内部也会自动调用connect方法
 //        conn.addRequestProperty("Range", "bytes=" + length + "-" + reLen);
@@ -243,6 +248,9 @@ public class M3U8Controller {
             m3u8Job.setTotal(items.size());
             m3u8Job.getActive().set(0);
             m3u8Job.setId(m3u8Job.getFrom() + "_" + m3u8Job.getDir() + "/" + m3u8Job.getFile());
+            if(jobs.get(m3u8Job.getId())!=null){
+                jobs.get(m3u8Job.getId()).setEnd(true);
+            }
             jobs.put(m3u8Job.getId(), m3u8Job);
             JobWorkerOverseer.WORK_POOL.add(new M3u8JobWorker(m3u8Job));
             //-------------------------------------------------
@@ -343,6 +351,9 @@ public class M3U8Controller {
             String command = (new File("").getCanonicalPath().replaceAll("\\\\", "/") + "/ffmpeg.exe -f concat -i \"" + listPath + "\" -c copy " + target);
             String msg = executeCommand(command, target);
             m3u8Job.getTransfered().set(m3u8Job.getTotal());
+            if(msg.isEmpty()){
+                m3u8Job.setEnd(true);
+            }
             return new JsonResult.Builder<Object>().code(msg.isEmpty() ? 200 : 500).msg(msg).build();
         } catch (IOException e) {
             e.printStackTrace();

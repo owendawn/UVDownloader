@@ -51,4 +51,6 @@ public class M3u8Job {
     private AtomicLong last;
     //从下载开始到现在的平均下载速度
     private AtomicLong speed=new AtomicLong(0);
+    //
+    private boolean isEnd=false;
 }

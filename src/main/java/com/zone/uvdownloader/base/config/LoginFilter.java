@@ -3,6 +3,9 @@ package com.zone.uvdownloader.base.config;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -13,7 +16,8 @@ import java.io.IOException;
 /**
  * Created by Owen Pan on 2017-07-07.
  */
-@WebFilter(urlPatterns = "/*", filterName = "loginFilter")
+@Component
+@WebFilter(urlPatterns = "*", filterName = "loginFilter")
 public class LoginFilter implements Filter {
     Log log = LogFactory.getLog(LoginFilter.class);
 

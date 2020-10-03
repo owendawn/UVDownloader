@@ -102,6 +102,7 @@
             file: document.getElementById("file").value.trim(),
         }, function (re) {
             alert(re.code===200?"开始下载":re.msg);
+            refreshJobs();
         })
     }
     function details(dom) {
@@ -229,14 +230,21 @@
     }
 
     function reloadPiece(id,fileName) {
+        if(!fileName) {
+            var ff = prompt("请输入重新下载文件名（包含后缀）")
+            if(!ff){
+                return
+            }
+            fileName=ff.trim()
+        }
         PanUtil.ajax.post("/m3u8/reloadPiece", {
             id: id,
-            file:fileName||prompt("请输入重新下载文件名（包含后缀）").trim()
+            file:fileName
         }, function (re) {
             if (re.code === 500) {
                 alert("下载切片失败");
             } else {
-                alert("下载切片成功")
+                notify("下载切片成功")
             }
         })
     }
@@ -279,6 +287,27 @@
                 }
             }, 1000)
         };
+    }
+
+    function notify(msg){
+        if(window.Notification && Notification.permission !== "denied") {
+            //Notification.requestPermission这是一个静态方法，作用就是让浏览器出现是否允许通知的提示
+            Notification.requestPermission(function(status) {
+                console.log('2: '+status);
+                //如果状态是同意
+                if (status === "granted") {
+                    var m = new Notification('提醒', {
+                        body: msg,　　//消息体内容
+                        icon:"http://officeweb365.com/Content/imgs/ow.jpg"　　//消息图片
+                    });
+                    m.onclick = function () {
+
+                    }
+                } else{
+                    alert('当前浏览器不支持弹出消息')
+                }
+            });
+        }
     }
 
 </script>
