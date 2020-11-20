@@ -39,7 +39,7 @@ button,input[type='button']{
     background: #573131;
     color: white;
     border-radius: 10%;
-    padding: 6px 22px;
+    padding: 2px 18px;
     line-height: 2rem;
 }
 button:hover,input[type='button']:hover{
@@ -59,7 +59,7 @@ table tr:nth-child(1) th{
 }
 table tr td,table tr th{
     border-bottom:2px solid silver;
-    padding:12px 24px;
+    padding:8px 24px;
     text-align: center;
 }
 p{

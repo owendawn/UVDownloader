@@ -23,8 +23,8 @@
             m3u8</h2>
         <hr>
         <p>
-            线程数(<span id="connectSize2">-</span>)
-            <input type="range" min="1" max="100" id="connectSize" onchange="changeConnectSize(this)">
+            线程数(<span id="connectSize2">100</span>)
+            <input type="range" min="1" max="200" value="100" id="connectSize" onchange="changeConnectSize(this)">
             <button onclick="setConnectSize()">设置</button>
         </p>
         <hr>
@@ -34,7 +34,7 @@
             <button onclick="document.getElementById('dir').value='${desktopPath!''}'">桌面</button>
         </p>
         <p>
-            文件名
+            &emsp;文件名
             <input type="text" id="file">
 
         </p>
@@ -43,7 +43,7 @@
             <textarea rows="4" id="from" onchange="getFileName()" style="line-height: 1.5rem;width: 100%"></textarea>
             <button onclick="download()">下载</button>
             <br>
-            <button onclick="refreshJobs()">刷新</button>
+
             <br>
         </p>
         <hr>
@@ -55,8 +55,8 @@
         <table>
             <thead>
             <tr>
-                <th style="width:5rem;">参数</th>
-                <th>值</th>
+                <th style="width:5rem;"><button style="padding: 0px 3px;float: left;border-radius: 50%;" onclick="refreshJobs()">刷新</button></th>
+                <th>下载列表</th>
             </tr>
             </thead>
             <tbody id="tbody">
@@ -71,6 +71,8 @@
     var switchMap={};
     var failSwitchMap={};
     var ws;
+    var interval1;
+    var tansferMap={};
     // document.getElementById("from").value = "https://zk2.cdt-md.com/2020/03/28/kPSiMsPLsGn07UwH/playlist.m3u8"
     // document.getElementById("from").value = "https://www.mmicloud.com/20190404/Eoxt9tiu/2000kb/hls/index.m3u8"
     // document.getElementById("from").value = "https://s2.135-cdn.com/2020/04/10/o762FVjpITReMJSB/index.m3u8"
@@ -148,35 +150,70 @@
     function parseJobs(map) {
         jobMap=map;
         var arr = [];
+        var jobs=[];
         for (var k in map) {
-            var it = map[k];
+            jobs.push(map[k])
+        }
+        jobs= jobs.sort(function (a,b){
+            return b.downloadTime.replace(/[\s-:]/g,"")-a.downloadTime.replace(/[\s-:]/g,"")
+        });
+        for(var i=0;i<jobs.length;i++){
+            var it = jobs[i];
+            if(it.total===it.count){
+                if(it.transfered===it.total){
+                    tansferMap[it.id]=true
+                }else{
+                    if(!tansferMap[it.id]) {
+                        transfer(it.id)
+                    }
+                }
+            }
             arr.push([
-                "<tr><td colspan='2' style='background: #f7f7f7;color: brown;font-weight: bold;'>"
-                + it.from
-                + "<br><button data-id='"+k+"' onclick='details(this)'>详情</button>"
-                + "<br><button data-id='"+k+"' onclick='toggle(this)'>收缩/展开</button>"
-                +"</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>下载路径</td><td>" + it.dir + "/" + it.file + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>工作线程</td><td>" + it.active + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>速度</td><td>" + PanUtil.formatShortNumber(it.speed, 2) + "/s</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>总时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringSum) * 1000, 'HH:mm:ss') + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成时长</td><td>" + PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringAlready) * 1000, 'HH:mm:ss') + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>总大小</td><td>" + PanUtil.formatShortNumber(it.length, 3) + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成大小</td><td>" + PanUtil.formatShortNumber(it.complete, 3) + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>切片数</td><td>" + it.total + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>完成切片</td><td>" + it.count + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>失败切片</td><td>" + it.fail.length +(it.fail.length<=0?"":" <button onclick='toggleFails(\"fails_"+it.id+"\")'>收缩/展开</button>")+"</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+" id='fails_"+it.id+"' "+(failSwitchMap["fails_"+it.id]?"":"class='hideFails'")+">",
-                "   <td colspan='2'>" ,
-                "       <div >",
+                "<tr><td colspan='2' style='background: #f7f7f7;color: brown;font-weight: bold;'>",
+                "<div style='line-height: 2rem;'>"+it.dir + "/" + it.file+"</div>",
+                "   <div>",
+                "       <button style=\"padding: 0px 12px;float: left;border-radius: 50%;width:160px;background:purple;\" "+(it.total>it.count&&it.total>it.count+it.fail.length?"":"hidden")+">正在下载 - "+Math.round(it.count/it.total*10000)/100+"%</button>",
+                "       <button style=\"padding: 0px 12px;float: left;border-radius: 50%;width:160px;background:orange;\" "+(it.total>it.count&&it.total<=it.count+it.fail.length?"":"hidden")+">已经暂停 - "+Math.round(it.count/it.total*10000)/100+"%</button>",
+                "       <button style=\"padding: 0px 12px;float: left;border-radius: 50%;width:160px;background:green;\" "+(it.total<=it.count&&it.total<=it.count+it.fail.length?"":"hidden")+">下载完成 - "+Math.round(it.count/it.total*10000)/100+"%</button>",
+                "       <button style=\"padding: 0px 12px;float: left;border-radius: 50%;width: 90px;margin-left: 6px;background: darkred;\">"+PanUtil.formatShortNumber(it.speed, 2)+"/s</button>",
+                "       <span style='float: left;line-height: 2rem;color: #8c8989;font-weight: normal;font-size: 14px;margin-left: 6px;'>"+it.downloadTime+"</span>",
+                "       <button style='float: right;padding: 0px 8px;' data-id='"+it.id+"' onclick='details(this)'>详情</button>",
+                "       <button style='float: right;padding: 0px 8px;margin-right:6px;' data-id='"+it.id+"' onclick='toggle(this)'>收缩/展开</button>",
+                "   </div>",
+                "   </td>",
+                "</tr>",
+                "<tr "+(!switchMap[it.id]?"style='display:none;'":"style='display:table-row;;'")+">",
+                "<td colspan='2'>",
+                "<table>",
+                "   <tr><td style='min-width: 70px'>下载时间</td><td>" + it.downloadTime + "</td></tr>",
+                "   <tr><td>下载地址</td><td>" + it.from + "</td></tr>",
+                "   <tr><td>工作组</td><td>" + it.active+"（ "+ PanUtil.formatShortNumber(it.speed, 2)+"/s ）" + "</td></tr>",
+                "   <tr><td>总时长</td><td>",
+                PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringAlready) * 1000, 'HH:mm:ss'),
+                " / "+ PanUtil.dateFormat.toTimeFormatter(Math.round(it.duringSum) * 1000, 'HH:mm:ss') ,
+                "       </td>",
+                "   </tr>",
+                "   <tr><td>容量缓存</td><td>" + PanUtil.formatShortNumber(it.complete, 3)+" / "+PanUtil.formatShortNumber(it.length, 3) + "</td></tr>",
+                "   <tr><td>切片数</td><td>" + it.count+" / " +it.total + "</td></tr>",
+                "   <tr><td>失败切片</td><td>" + it.fail.length +(it.fail.length<=0?"":" <button onclick='toggleFails(\"fails_"+it.id+"\")'>收缩/展开</button>")+"</td></tr>",
+                "   <tr id='fails_"+it.id+"' "+(failSwitchMap["fails_"+it.id]?"":"class='hideFails'")+">",
+                "       <td colspan='2' style='padding:0 24px;'>" ,
+                "           <div >",
                 it.fail.map(function(o,idx){
                     return "<div style='word-break: break-all;'><button onclick='reloadPiece(\"" + it.id + "\",\"" + o.fileName + "\")'>重试</button> "+o.url+"</div>";
                 }).join(""),
-                "       </div>",
+                "           </div>",
+                "       </td>",
+                "   </tr>",
+                "   <tr><td>转换切片</td><td>" + it.transfered + "</td></tr>",
+                "   <tr><td>操作</td><td>",
+                "       <button id='transfer-"+it.id+"' onclick='transfer(\"" + it.id + "\")' "+(it.transfered===it.total?"hidden":"")+">"+(tansferMap[it.id]?"正在转换":"合并转换")+"</button>",
+                "       <button onclick='reloadPiece(\"" + it.id + "\")' "+(it.transfered===it.total?"hidden":"")+">切片重新下载</button>",
+                "       <button onclick='deleteJob(\"" + it.id + "\")' style='background: crimson;'>删除</button></td>",
+                "   </tr>",
+                "   </table>",
                 "   </td>",
-                "</tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>转换切片</td><td>" + it.transfered + "</td></tr>",
-                "<tr "+(!switchMap[k]?"style='display:none;'":"style='display:table-row;;'")+"><td>操作</td><td><button onclick='transfer(\"" + it.id + "\")'>合并转换</button> <button onclick='reloadPiece(\"" + it.id + "\")'>切片重新下载</button></td></tr>",
+                "</tr>"
             ].join(""))
         }
         document.getElementById("tbody").innerHTML = arr.join("")
@@ -196,27 +233,24 @@
     function toggle(dom) {
         var id=dom.getAttribute("data-id");
         var i=switchMap[id]||false;
-        dom.parentNode.parentNode.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
-        dom.parentNode.parentNode.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.style.display=(i?"none":"table-row");
+        // dom.parentNode.parentNode.parentNode.nextElementSibling.style.display=(i?"none":"table-row");
         switchMap[id]=!Number(i)
+        for (var k in switchMap){
+            if(k!==id){
+                switchMap[k]=false
+            }
+        }
+        refreshJobs();
     }
 
     function transfer(id) {
+        tansferMap[id]=true
+        var dom=document.getElementById("transfer-"+id)
         PanUtil.ajax.post("/m3u8/transfer2", {
             id: id,
         }, function (re) {
-            if (re.code === 500) {
+            if (re.code === 500) {111
+                tansferMap[id]=false
                 var name=re.msg.substring(re.msg.lastIndexOf("/")+1,re.msg.lastIndexOf("'"));
                 if(confirm("转换失败！\n\n是否重新下载切片："+name)){
                     reloadPiece(id,name);
@@ -246,10 +280,30 @@
             } else {
                 notify("下载切片成功")
             }
-        })
+        });
+        refreshJobs();
+    }
+
+    function deleteJob(id) {
+            if(!confirm("确认删除吗？")){
+                return
+            }
+        PanUtil.ajax.post("/m3u8/deleteJob", {
+            id: id
+        }, function (re) {
+            if (re.code === 500) {
+                alert("删除任务失败");
+            } else {
+                notify("删除任务成功")
+            }
+        });
+        refreshJobs();
     }
 
     function doTask() {
+        if(interval1){
+            clearInterval(interval1)
+        }
         ws = new WebSocket("ws://localhost:8080/ws/m3u8");
         ws.onopen = function (evt) {
             console.log("Connection open ...");
@@ -271,6 +325,9 @@
             };
             ws.onerror = function (event) {
                 console.log("Connection error.");
+                try {
+                    ws.close()
+                }catch (e){}
                 doTask()
             };
 
@@ -281,7 +338,7 @@
                 }));
             }
 
-            setInterval(function () {
+            interval1= setInterval(function () {
                 if (ws.readyState === 1) {
                     sendWs("getJobs")
                 }

@@ -19,6 +19,7 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -247,6 +248,7 @@ public class M3U8Controller {
             m3u8Job.setMsg(msgs);
             m3u8Job.setTotal(items.size());
             m3u8Job.getActive().set(0);
+            m3u8Job.setDownloadTime(PFUtil.getFormatDateTime("yyyy-MM-dd HH:mm:ss.SSS", LocalDateTime.now()));
             m3u8Job.setId(m3u8Job.getFrom() + "_" + m3u8Job.getDir() + "/" + m3u8Job.getFile());
             if(jobs.get(m3u8Job.getId())!=null){
                 jobs.get(m3u8Job.getId()).setEnd(true);
@@ -280,10 +282,12 @@ public class M3U8Controller {
 
     @GetMapping("getJobs")
     public JsonResult getJobs() {
-
         return new JsonResult.Builder<Object>().data(getJobStates()).build();
     }
-
+    @PostMapping("deleteJob")
+    public JsonResult deleteJob(String id){
+        return new JsonResult.Builder<Object>().data(jobs.remove(id)).build();
+    }
     /**
      * 该方案在实际使用中出现，第二次合并时间戳不一致的问题，导致合并文件后面全部无法播放，遂废弃
      *

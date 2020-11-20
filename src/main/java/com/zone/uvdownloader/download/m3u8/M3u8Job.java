@@ -53,4 +53,6 @@ public class M3u8Job {
     private AtomicLong speed=new AtomicLong(0);
     //
     private boolean isEnd=false;
+    //下载时间
+    private String downloadTime;
 }
